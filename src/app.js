@@ -8,6 +8,8 @@ const favicon = require('express-favicon');
 const logger = require('morgan');
 
 const mainRouter = require('./routes/mainRouter.js');
+const userRouter = require('./routes/userRouter.js')
+
 
 const connectDB = require('./db/db.js');
 connectDB();
@@ -21,6 +23,6 @@ app.use(express.static('public'))
 app.use(favicon(__dirname + '/public/favicon.ico'));
 
 // routes
-app.use('/api/v1', mainRouter);
+app.use('/api/v1', mainRouter, userRouter);
 
 module.exports = app;
