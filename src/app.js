@@ -1,10 +1,16 @@
+require('dotenv').config();
+
 const express = require('express');
+const mongoose = require("mongoose")
 const app = express();
 const cors = require('cors')
 const favicon = require('express-favicon');
 const logger = require('morgan');
 
 const mainRouter = require('./routes/mainRouter.js');
+
+const connectDB = require('./db/db.js');
+connectDB();
 
 // middleware
 app.use(cors());
