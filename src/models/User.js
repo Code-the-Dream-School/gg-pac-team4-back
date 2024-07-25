@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const { adultRequired, adultValidator } = require('../utils/adultValidation');
+const { adultValidator } = require('../utils/adultValidation');
 
 // Define the Users schema
 const UsersSchema = new mongoose.Schema({
@@ -18,11 +18,11 @@ const UsersSchema = new mongoose.Schema({
   },
   dateOfBirth: {
     type: Date,
-    required: [true, 'Please provide a date of birth']
+    required: function() { return this.role === 'student'; }
   },
   adultName: {
     type: String,
-    required: adultRequired, // Use the imported function
+    //required: function() { return this.role === 'student'; },
     validate: adultValidator // Use the imported validator
   },
   phoneNumber: {
@@ -51,7 +51,11 @@ const UsersSchema = new mongoose.Schema({
     type: String,
     enum: ['student', 'teacher'],
     required: true
-  }, 
+  },
+  subject: { 
+    type: String,
+    required: function() { return this.role === 'teacher'; }
+  } 
 });
 
 // Before saving the users, hash the password
