@@ -17,7 +17,7 @@ const registerTeacher = async (req, res) => {
       email,
       password, // Directly use the password from req.body
       role: 'teacher', 
-      subject 
+      subject     
     });
     console.log("New teacher:", newTeacher); 
 

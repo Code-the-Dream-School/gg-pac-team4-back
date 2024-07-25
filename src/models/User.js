@@ -27,7 +27,7 @@ const UsersSchema = new mongoose.Schema({
   },
   phoneNumber: {
     type: String,
-    required: [true, 'Please provide a phone number'],
+    required: function() { return this.role === 'student'; },
     match: [
       /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/,
       'Please provide a valid phone number'
