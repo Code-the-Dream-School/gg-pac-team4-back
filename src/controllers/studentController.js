@@ -5,8 +5,6 @@ const registerStudent = async (req, res) => {
   try {
     const { firstName, lastName, email, password, dateOfBirth, adultName } = req.body; 
 
-    console.log("Request body:", req.body); // Log the request body for debugging
-
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
@@ -31,10 +29,7 @@ const registerStudent = async (req, res) => {
 
     const newStudent = new User(newStudentData);
 
-    console.log("New student:", newStudent); // Log the new student before saving
     await newStudent.save();
-
-    console.log("Student registered:", newStudent); // Log the saved student
 
     res.status(201).json({ message: "Student registered successfully" });
   } catch (error) {

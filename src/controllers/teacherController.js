@@ -3,9 +3,7 @@ const User = require("../models/User.js");
 
 const registerTeacher = async (req, res) => {
   try {
-    const { firstName, lastName, email, password } = req.body; 
-
-    console.log("Request body:", req.body);
+    const { firstName, lastName, email, password } = req.body;     
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -18,11 +16,8 @@ const registerTeacher = async (req, res) => {
       password, // Directly use the password from req.body
       role: 'teacher'
     });
-    console.log("New teacher:", newTeacher); 
-
+    
     await newTeacher.save();
-
-    console.log("Teacher registered:", newTeacher);
 
     res.status(201).json({ message: "Teacher registered successfully" });
   } catch (error) {
