@@ -16,18 +16,12 @@ const UsersSchema = new mongoose.Schema({
     minlength: 2,
     maxlength: 50
   },
-  dateOfBirth: {
-    type: Date,
-    required: function() { return this.role === 'student'; }
-  },
   adultName: {
     type: String,
-    //required: function() { return this.role === 'student'; },
-    validate: adultValidator // Use the imported validator
+    validate: adultValidator // Use the imported validator from utils/adultValidation.js
   },
   phoneNumber: {
-    type: String,
-    required: function() { return this.role === 'student'; },
+    type: String,    
     match: [
       /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/,
       'Please provide a valid phone number'
@@ -53,8 +47,7 @@ const UsersSchema = new mongoose.Schema({
     required: true
   },
   subject: { 
-    type: String,
-    required: function() { return this.role === 'teacher'; }
+    type: String,    
   } 
 });
 

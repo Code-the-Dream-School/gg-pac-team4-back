@@ -3,7 +3,7 @@ const User = require("../models/User.js");
 
 const registerTeacher = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, subject } = req.body; 
+    const { firstName, lastName, email, password } = req.body; 
 
     console.log("Request body:", req.body);
 
@@ -16,8 +16,7 @@ const registerTeacher = async (req, res) => {
       lastName,
       email,
       password, // Directly use the password from req.body
-      role: 'teacher', 
-      subject     
+      role: 'teacher'
     });
     console.log("New teacher:", newTeacher); 
 
