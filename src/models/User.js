@@ -16,6 +16,10 @@ const UsersSchema = new mongoose.Schema({
     minlength: 2,
     maxlength: 50
   },
+  dateOfBirth: {
+    type: Date,
+    required: function() { return this.role === 'student'; } // Required only for students
+  },
   adultName: {
     type: String,
     validate: adultValidator // Use the imported validator from utils/adultValidation.js
