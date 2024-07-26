@@ -31,8 +31,6 @@ const registerStudent = async (req, res) => {
 
     await newStudent.save();
 
-    console.log("Student registered:", newStudent);
-
     res.status(201).json({ message: "Student registered successfully" });
   } catch (error) {
     console.error("Error registering student:", error);
