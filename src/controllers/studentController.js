@@ -1,5 +1,5 @@
 const User = require("../models/User.js");
-const { calculateAge } = require("../utils/adultvalidation.js");
+const { calculateAge } = require("../utils/adultValidation.js");
 
 const registerStudent = async (req, res) => {
   try {
@@ -30,6 +30,8 @@ const registerStudent = async (req, res) => {
     const newStudent = new User(newStudentData);
 
     await newStudent.save();
+
+    console.log("Student registered:", newStudent);
 
     res.status(201).json({ message: "Student registered successfully" });
   } catch (error) {
