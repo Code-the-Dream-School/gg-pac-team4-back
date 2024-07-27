@@ -22,7 +22,7 @@ const UsersSchema = new mongoose.Schema({
   },
   adultName: {
     type: String,
-    validate: adultValidator // Use the imported validator from utils/adultValidation.js
+    validate: adultValidator, // Use the imported validator from utils/adultValidation.js    
   },
   phoneNumber: {
     type: String,    

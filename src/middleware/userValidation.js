@@ -1,8 +1,6 @@
 const { body, validationResult } = require('express-validator');
 
-// Define the validateStudent middleware
 const validateStudent = [
-
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -12,10 +10,7 @@ const validateStudent = [
   }
 ];
 
-// Define the validateTeacher middleware
-const validateTeacher = [
-
-  // Add any teacher-specific validations here
+const validateTeacher = [  
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -25,7 +20,6 @@ const validateTeacher = [
   }
 ];
 
-// Export all middleware functions at the bottom
 module.exports = {
   validateStudent,
   validateTeacher
