@@ -42,7 +42,7 @@ const registerUser = async (req, res, role) => {
 
     await newUserInstance.save();
     const token = generateToken(newUser._id)
-    res.status(201).json({ message: `${role.charAt(0).toUpperCase() + role.slice(1)} registered successfully` });
+    res.status(201).json({ message: `${role.charAt(0).toUpperCase() + role.slice(1)} registered successfully`, token });
   } catch (error) {
     console.error(`Error registering ${role}:`, error);
     res.status(500).json({ message: "Internal server error", error: error.message });
