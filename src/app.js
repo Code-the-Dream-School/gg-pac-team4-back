@@ -9,6 +9,7 @@ const logger = require('morgan');
 
 const mainRouter = require('./routes/mainRouter.js');
 const userRouter = require('./routes/userRouter.js')
+const classesRouter = require('./routes/classesRouter.js')
 
 
 const connectDB = require('./db/db.js');
@@ -23,6 +24,6 @@ app.use(express.static('public'))
 app.use(favicon(__dirname + '/public/favicon.ico'));
 
 // routes
-app.use('/api/v1', mainRouter, userRouter);
+app.use('/api/v1', mainRouter, userRouter, classesRouter);
 
 module.exports = app;
