@@ -9,6 +9,7 @@ const logger = require('morgan');
 
 const mainRouter = require('./routes/mainRouter.js');
 const userRouter = require('./routes/userRouter.js')
+const classesRouter = require('./routes/classesRouter.js')
 
 
 const connectDB = require('./db/db.js');
@@ -24,6 +25,6 @@ app.use(favicon(__dirname + '/public/favicon.ico'));
 
 // routes
 app.use('/api/v1', mainRouter, userRouter , classesRouter);
-app.use('/api/v1/users', userRouter);
+app.use('/api/v1/users', userRouter, classesRouter);
 
 module.exports = app;
