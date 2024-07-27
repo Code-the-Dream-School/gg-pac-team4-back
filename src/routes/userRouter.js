@@ -13,4 +13,7 @@ router.post("/register/teacher", validateTeacher, registerTeacher);
 // POST /api/v1/login
 router.post("/login", authController.loginUser);
 
+// POST /api/v1/logout
+router.post("/logout", authController.logoutUser)
+
 module.exports = router;

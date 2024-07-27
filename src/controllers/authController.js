@@ -86,5 +86,18 @@ const loginUser = async (req, res) => {
   }
 };
 
+//Logout
+const logoutUser = async (req, res) => {
+  try {
+    res.clearCookie("token", {
+      httpOnly: true,
+      expires: new Date(Date.now()),
+    });
+    return res.status(201).json({ message: "Logout successful"});
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" })
+  }
+};
 
-module.exports = { registerStudent, registerTeacher, loginUser };
+
+module.exports = { registerStudent, registerTeacher, loginUser, logoutUser };
