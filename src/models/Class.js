@@ -1,11 +1,11 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const ClassSchema = new mongoose.Schema({
-    creatorId: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: 'User' 
-    },
+    // createdBy: {
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     required: true,
+    //     ref: 'User' 
+    // },
     classTitle: {
         type: String,
         required: [true, "Please provide your class title"],
@@ -50,33 +50,57 @@ const ClassSchema = new mongoose.Schema({
     },
     goal: {
         type: String,
-        minlength: [2, "Goal must be at least 2 characters long"],
         maxlength: [200, "Goal cannot exceed 200 characters"],
+        default: ""
     },
     experience: {
         type: String,
-        minlength: [2, "Experience must be at least 2 characters long"],
         maxlength: [200, "Experience cannot exceed 200 characters"],
+        default: ""
     },
     other: {
         type: String,
-        minlength: [2, "Other information must be at least 2 characters long"],
         maxlength: [200, "Other information cannot exceed 200 characters"],
+        default: ""
     },
-    availableTime: {
-        date: {
-            type: Date,
-        },
-        startTimes: {
-            type: [String],
-            default: []
+    availableTime: [
+        {
+            date: {
+                type: Date,
+            },
+            startTime: {
+                type: String,
+                default: ""
+            }
         }
-    },
+    ],
     uploadClassImage: {
         type: String,
         default: null
+    },
+    likes: {
+        type: Number,
+        default: 0
+    },
+    category: {
+        type: String,
+        required: [true, "Please provide the category of the class"],
+        enum: {
+            values: [
+                'Music', 
+                'Art', 
+                'Dance', 
+                'Photography', 
+                'Film & Video', 
+                'Design', 
+                'Theatre', 
+                'Literature', 
+                'Ceramics', 
+                'Crafts'
+            ]
+        }
     }
-})
+}, { timestamps: true });
 
 const ClassModel = mongoose.model("Class", ClassSchema, "Classes");
 
