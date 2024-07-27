@@ -33,6 +33,7 @@ const displaySearchClasses = async (req, res) => {
     const total = await Class.countDocuments(query);
 
     console.log("Classes retrieved:", classes);
+
     res.status(201).json({
       classes,
       total,
