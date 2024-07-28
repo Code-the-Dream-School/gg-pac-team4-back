@@ -1,4 +1,10 @@
 const Class = require("../models/Class");
+const { StatusCodes } = require("http-status-codes");
+const {
+  BadRequestError,
+  NotFoundError,
+  UnauthenticatedError,
+} = require("../errors");
 
 const displaySearchClasses = async (req, res) => {
   let { page, limit, search, sortBy, sortOrder } = req.query;
@@ -32,9 +38,7 @@ const displaySearchClasses = async (req, res) => {
 
     const total = await Class.countDocuments(query);
 
-    console.log("Classes retrieved:", classes);
-
-    res.status(201).json({
+    res.status(StatusCodes.OK).json({
       classes,
       total,
       totalPages: Math.ceil(total / limit),
@@ -42,7 +46,9 @@ const displaySearchClasses = async (req, res) => {
     });
   } catch (error) {
     console.error("Error retrieving classes:", error);
-    res.status(500).json({ message: "Internal server error" });
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: "Internal server error" });
   }
 };
 
@@ -70,9 +76,9 @@ const createClass = async (req, res) => {
       duration,
     });
     if (existingClass) {
-      return res
-        .status(400)
-        .json({ message: "Class with this title and description already exists." });
+      throw new BadRequestError(
+        "Class with this title and description already exists."
+      );
     }
 
     const newClass = new Class({
@@ -90,11 +96,14 @@ const createClass = async (req, res) => {
     });
 
     await newClass.save();
-    console.log("Class has been created:", newClass);
-    res.status(201).json({ message: "Class created successfully" });
+    res
+      .status(StatusCodes.CREATED)
+      .json({ message: "Class created successfully" });
   } catch (error) {
     console.error("Error creating class:", error);
-    res.status(500).json({ message: "Internal server error" });
+    const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+    const errorMessage = error.message || "Error creating class";
+    res.status(statusCode).json({ error: errorMessage });
   }
 };
 
