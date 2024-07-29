@@ -145,4 +145,44 @@ const createClass = async (req, res) => {
   }
 };
 
-module.exports = { displaySearchClasses, createClass, getClassDetails };
+const editClass = async (req, res) => {
+  const { classId } = req.params;
+  const userId = req.user.userId
+  try {
+    const editClass = await Class.findById(classId);
+
+    if (!editClass) {
+      throw new NotFoundError('Class does not exist');
+    }
+
+    if (editClass.createdBy.toString() !== userId) {
+      return res.status(StatusCodes.FORBIDDEN).json({ message: "You do not have permission to edit this class." });
+  }
+
+    const updateData = {};
+    if (req.body.classes) {
+        for (const [key, value] of Object.entries(req.body.classes)) {
+            updateData[`classes.${key}`] = value;
+        }
+    }
+
+    Object.entries(req.body).forEach(([key, value]) => {
+        if (key !== 'classes') {
+            updateData[key] = value;
+        }
+    });
+
+    const updatedClass = await Class.findByIdAndUpdate(
+        classId,
+        { $set: updateData }, 
+        { new: true, runValidators: true } 
+    );
+
+    res.status(StatusCodes.OK).json({ project: updatedClass });
+} catch (error) {
+    console.error("Error editing class:", error);
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: "Internal server error" });
+  }
+}
+
+module.exports = { displaySearchClasses, createClass, getClassDetails, editClass };

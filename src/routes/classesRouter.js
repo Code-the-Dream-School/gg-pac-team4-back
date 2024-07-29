@@ -7,6 +7,7 @@ const authenticationMiddleware = require('../middleware/authentication')
 router
     .get("/classes", classesController.displaySearchClasses)
     .get("/classes/:classId", authenticationMiddleware, classesController.getClassDetails)
-    .post("/classes", authenticationMiddleware, classesController.createClass);
+    .post("/classes", authenticationMiddleware, classesController.createClass)
+    .patch("/classes/:classId", authenticationMiddleware, classesController.editClass)
 
 module.exports = router;
