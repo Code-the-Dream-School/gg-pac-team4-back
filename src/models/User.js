@@ -4,7 +4,7 @@ const { adultValidator, adultNameFirstAndLast } = require('../utils/adultValidat
 const {lettersOnlyValidator}= require("../utils/letterValidation.js");
 
 // Define the Users schema
-const UsersSchema = new mongoose.Schema({
+const UserSchema = new mongoose.Schema({
   firstName: {
     type: String,
     required: [true, 'Please provide a first name'],
@@ -79,4 +79,4 @@ UsersSchema.methods.comparePassword = async function(candidatePassword) {
   return isMatch;
 };
 
-module.exports = mongoose.model('Users', UsersSchema);
+module.exports = mongoose.model('User', UserSchema);
