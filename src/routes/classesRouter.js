@@ -9,5 +9,6 @@ router
     .get("/classes/:classId", authenticationMiddleware, classesController.getClassDetails)
     .post("/classes", authenticationMiddleware, classesController.createClass)
     .patch("/classes/:classId", authenticationMiddleware, classesController.editClass)
+    .delete("/classes/:classId", authenticationMiddleware, classesController.deleteClass)
 
 module.exports = router;

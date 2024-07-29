@@ -5,7 +5,7 @@ const {
   NotFoundError,
   UnauthenticatedError,
 } = require("../errors");
-
+const ForbiddenError = require("../errors/forbidden");
 
 const displaySearchClasses = async (req, res) => {
   let { page, limit, search, sortBy, sortOrder } = req.query;
@@ -60,7 +60,7 @@ const getClassDetails = async (req, res) => {
     const classDetail = await Class.findById(classId);
 
     if (!classDetail) {
-      throw new NotFoundError('Class does not exist');
+      throw new NotFoundError("Class does not exist");
     }
 
     const response = {
@@ -76,18 +76,19 @@ const getClassDetails = async (req, res) => {
       other: classDetail.other,
       availableTime: classDetail.availableTime,
       createdBy: classDetail.createdBy,
-      likes: classDetail.likes
+      likes: classDetail.likes,
     };
 
     res.status(StatusCodes.OK).json({ class: response });
   } catch (error) {
     console.error("Error retrieving class details:", error);
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: "Internal server error" });
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: "Internal server error" });
   }
 };
 
 const createClass = async (req, res) => {
-
   const createdBy = req.user.userId;
 
   try {
@@ -130,7 +131,7 @@ const createClass = async (req, res) => {
       experience,
       other,
       availableTime,
-      createdBy
+      createdBy,
     });
 
     await newClass.save();
@@ -147,42 +148,82 @@ const createClass = async (req, res) => {
 
 const editClass = async (req, res) => {
   const { classId } = req.params;
-  const userId = req.user.userId
+  const userId = req.user.userId;
   try {
-    const editClass = await Class.findById(classId);
+    const classToEdit = await Class.findById(classId);
 
-    if (!editClass) {
-      throw new NotFoundError('Class does not exist');
+    if (!classToEdit) {
+      throw new NotFoundError("Class does not exist");
     }
 
-    if (editClass.createdBy.toString() !== userId) {
-      return res.status(StatusCodes.FORBIDDEN).json({ message: "You do not have permission to edit this class." });
-  }
+    if (!classToEdit.createdBy || classToEdit.createdBy.toString() !== userId) {
+      throw new ForbiddenError(
+        "You do not have permission to edit this class."
+      );
+    }
 
     const updateData = {};
     if (req.body.classes) {
-        for (const [key, value] of Object.entries(req.body.classes)) {
-            updateData[`classes.${key}`] = value;
-        }
+      for (const [key, value] of Object.entries(req.body.classes)) {
+        updateData[`classes.${key}`] = value;
+      }
     }
 
     Object.entries(req.body).forEach(([key, value]) => {
-        if (key !== 'classes') {
-            updateData[key] = value;
-        }
+      if (key !== "classes") {
+        updateData[key] = value;
+      }
     });
 
     const updatedClass = await Class.findByIdAndUpdate(
-        classId,
-        { $set: updateData }, 
-        { new: true, runValidators: true } 
+      classId,
+      { $set: updateData },
+      { new: true, runValidators: true }
     );
 
     res.status(StatusCodes.OK).json({ project: updatedClass });
-} catch (error) {
+  } catch (error) {
     console.error("Error editing class:", error);
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: "Internal server error" });
+    const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+    const errorMessage = error.message || "Internal server error";
+    res.status(statusCode).json({ message: errorMessage });
   }
-}
+};
 
-module.exports = { displaySearchClasses, createClass, getClassDetails, editClass };
+const deleteClass = async (req, res) => {
+  const { classId } = req.params;
+  const userId = req.user.userId;
+  try {
+    const classToDelete = await Class.findById(classId);
+
+    if (!classToDelete) {
+      throw new NotFoundError("Class does not exist");
+    }
+
+    if (
+      !classToDelete.createdBy ||
+      classToDelete.createdBy.toString() !== userId
+    ) {
+      throw new ForbiddenError(
+        "You do not have permission to delete this class"
+      );
+    }
+
+    await Class.findByIdAndDelete(classId);
+
+    res.status(StatusCodes.OK).json({ message: "Class successfully deleted" });
+  } catch (error) {
+    console.error("Error deleting class:", error);
+    const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+    const errorMessage = error.message || "Internal server error";
+    res.status(statusCode).json({ message: errorMessage });
+  }
+};
+
+module.exports = {
+  displaySearchClasses,
+  createClass,
+  getClassDetails,
+  editClass,
+  deleteClass,
+};
