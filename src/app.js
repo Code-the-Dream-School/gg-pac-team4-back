@@ -29,6 +29,7 @@ app.use(favicon(__dirname + "/public/favicon.ico"));
 // routes
 app.use("/api/v1", mainRouter, userRouter, classesRouter);
 app.use("/api/v1/users", userRouter, classesRouter);
+app.use('/api/v1/classes', require('./routes/classesRouter')); 
 
 // Error handling middleware
 app.use(notFound);

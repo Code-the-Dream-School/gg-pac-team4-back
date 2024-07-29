@@ -6,8 +6,7 @@ const authenticationMiddleware = require('../middleware/authentication')
 // GET, POST, PATCH, DELETE
 router
     .get("/classes", classesController.displaySearchClasses)
+    .get("/classes/:classId", authenticationMiddleware, classesController.getClassDetails)
     .post("/classes", authenticationMiddleware, classesController.createClass);
-
-
 
 module.exports = router;

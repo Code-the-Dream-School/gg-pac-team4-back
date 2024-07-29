@@ -6,6 +6,7 @@ const {
   UnauthenticatedError,
 } = require("../errors");
 
+
 const displaySearchClasses = async (req, res) => {
   let { page, limit, search, sortBy, sortOrder } = req.query;
 
@@ -49,6 +50,39 @@ const displaySearchClasses = async (req, res) => {
     res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .json({ message: "Internal server error" });
+  }
+};
+
+const getClassDetails = async (req, res) => {
+  const { classId } = req.params;
+
+  try {
+    const classDetail = await Class.findById(classId);
+
+    if (!classDetail) {
+      throw new NotFoundError('Class does not exist');
+    }
+
+    const response = {
+      category: classDetail.category,
+      classTitle: classDetail.classTitle,
+      description: classDetail.description,
+      price: classDetail.price,
+      duration: classDetail.duration,
+      ages: classDetail.ages,
+      type: classDetail.type,
+      goal: classDetail.goal,
+      experience: classDetail.experience,
+      other: classDetail.other,
+      availableTime: classDetail.availableTime,
+      createdBy: classDetail.createdBy,
+      likes: classDetail.likes
+    };
+
+    res.status(StatusCodes.OK).json({ class: response });
+  } catch (error) {
+    console.error("Error retrieving class details:", error);
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: "Internal server error" });
   }
 };
 
@@ -111,4 +145,4 @@ const createClass = async (req, res) => {
   }
 };
 
-module.exports = { displaySearchClasses, createClass };
+module.exports = { displaySearchClasses, createClass, getClassDetails };
