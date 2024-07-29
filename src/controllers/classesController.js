@@ -53,6 +53,9 @@ const displaySearchClasses = async (req, res) => {
 };
 
 const createClass = async (req, res) => {
+
+  const createdBy = req.user.userId;
+
   try {
     const {
       category,
@@ -93,6 +96,7 @@ const createClass = async (req, res) => {
       experience,
       other,
       availableTime,
+      createdBy
     });
 
     await newClass.save();

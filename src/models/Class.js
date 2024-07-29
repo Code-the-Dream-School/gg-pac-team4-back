@@ -1,11 +1,11 @@
 const mongoose = require('mongoose');
 
 const ClassSchema = new mongoose.Schema({
-    // createdBy: {
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     required: true,
-    //     ref: 'User' 
-    // },
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'User' 
+    },
     classTitle: {
         type: String,
         required: [true, "Please provide your class title"],

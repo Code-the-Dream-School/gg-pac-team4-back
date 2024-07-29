@@ -1,10 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const classesController = require('../controllers/classesController');
+const authenticationMiddleware = require('../middleware/authentication')
 
-// GET /api/v1/classes
-router.get("/classes", classesController.displaySearchClasses);
-router.post("/classes", classesController.createClass);
+// GET, POST, PATCH, DELETE
+router
+    .get("/classes", classesController.displaySearchClasses)
+    .post("/classes", authenticationMiddleware, classesController.createClass);
 
 
 
