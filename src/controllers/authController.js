@@ -47,7 +47,7 @@ const registerUser = async (req, res, role) => {
 
     await newUserInstance.save();
     const token = generateToken(newUser._id);
-    res.status(StatusCodes.OK).json({
+    res.status(StatusCodes.CREATED).json({
       message: `${
         role.charAt(0).toUpperCase() + role.slice(1)
       } registered successfully`,

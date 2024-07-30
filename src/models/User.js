@@ -1,28 +1,35 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const { adultValidator } = require('../utils/adultValidation');
+const { adultValidator, adultNameFirstAndLast } = require('../utils/adultValidation');
+const {lettersOnlyValidator}= require("../utils/letterValidation.js");
 
 // Define the Users schema
-const UsersSchema = new mongoose.Schema({
+const UserSchema = new mongoose.Schema({
   firstName: {
     type: String,
     required: [true, 'Please provide a first name'],
     minlength: 2,
-    maxlength: 50
+    maxlength: 50,
+    validate: lettersOnlyValidator
   },
   lastName: {
     type: String,
     required: [true, 'Please provide a last name'],
     minlength: 2,
-    maxlength: 50
+    maxlength: 50,
+    validate: lettersOnlyValidator
   },
   dateOfBirth: {
     type: Date,
     required: function() { return this.role === 'student'; } // Required only for students
   },
   adultName: {
-    type: String,
-    validate: adultValidator, // Use the imported validator from utils/adultValidation.js    
+    type: String,   
+    validate: [
+      lettersOnlyValidator,
+      ...adultValidator, // Spread operator is used to include multiple validators
+      adultNameFirstAndLast
+    ]
   },
   phoneNumber: {
     type: String,    
@@ -51,13 +58,14 @@ const UsersSchema = new mongoose.Schema({
     required: true
   },
   subject: { 
-    type: String,    
+    type: String, 
+    validate: lettersOnlyValidator   
   } 
 });
 
 // Before saving the users, hash the password
 //pre('save') hook. The password hashing is consistently applied anytime a document is saved
-UsersSchema.pre('save', async function(next) {
+UserSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
   
   const salt = await bcrypt.genSalt(10);
@@ -66,9 +74,9 @@ UsersSchema.pre('save', async function(next) {
 });
 
 // Compare the provided password with the users' password
-UsersSchema.methods.comparePassword = async function(candidatePassword) {
+UserSchema.methods.comparePassword = async function(candidatePassword) {
   const isMatch = await bcrypt.compare(candidatePassword, this.password);
   return isMatch;
 };
 
-module.exports = mongoose.model('Users', UsersSchema);
+module.exports = mongoose.model('User', UserSchema);
