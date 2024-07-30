@@ -70,7 +70,7 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ message: "Invalid password" });
     }
     const token = generateToken(user._id);
-    return res.status(201).json({
+    return res.status(200).json({
       message: "Login successful",
       user: {
         email: user.email,
@@ -93,7 +93,7 @@ const logoutUser = async (req, res) => {
       httpOnly: true,
       expires: new Date(Date.now()),
     });
-    return res.status(201).json({ message: "Logout successful"});
+    return res.status(200).json({ message: "Logout successful"});
   } catch (error) {
     return res.status(500).json({ message: "Internal server error" })
   }

@@ -24,7 +24,6 @@ app.use(express.static('public'))
 app.use(favicon(__dirname + '/public/favicon.ico'));
 
 // routes
-app.use('/api/v1', mainRouter, classesRouter);
-app.use('/api/v1', userRouter);
+app.use('/api/v1', mainRouter, userRouter, classesRouter, );
 
 module.exports = app;
