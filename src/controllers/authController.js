@@ -1,5 +1,13 @@
 const User = require("../models/User.js");
 const { calculateAge } = require("../utils/adultValidation.js");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+
+const generateToken = (userId) => {
+  const secret = process.env.JWT_SECRET
+  const token = jwt.sign({ userId }, secret, { expiresIn: "1h" })
+  return token
+}
 
 const registerUser = async (req, res, role) => {
   try {
@@ -33,8 +41,8 @@ const registerUser = async (req, res, role) => {
     const newUserInstance = new User(newUser);
 
     await newUserInstance.save();
-
-    res.status(201).json({ message: `${role.charAt(0).toUpperCase() + role.slice(1)} registered successfully` });
+    const token = generateToken(newUser._id)
+    res.status(201).json({ message: `${role.charAt(0).toUpperCase() + role.slice(1)} registered successfully`, token });
   } catch (error) {
     console.error(`Error registering ${role}:`, error);
     res.status(500).json({ message: "Internal server error", error: error.message });
@@ -44,4 +52,52 @@ const registerUser = async (req, res, role) => {
 const registerStudent = (req, res) => registerUser(req, res, 'student');
 const registerTeacher = (req, res) => registerUser(req, res, 'teacher');
 
-module.exports = { registerStudent, registerTeacher };
+//Login
+const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(401).json({ message: "Please provide email and password" });
+    }
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email" });
+    }
+    const passwordValid = await bcrypt.compare(password, user.password);
+    if (!passwordValid) {
+      return res.status(401).json({ message: "Invalid password" });
+    }
+    const token = generateToken(user._id);
+    return res.status(200).json({
+      message: "Login successful",
+      user: {
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        _id: user._id,
+        role: user.role,
+        token
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+//Logout
+const logoutUser = async (req, res) => {
+  try {
+    res.clearCookie("token", {
+      httpOnly: true,
+      expires: new Date(Date.now()),
+    });
+    return res.status(200).json({ message: "Logout successful"});
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" })
+  }
+};
+
+
+module.exports = { registerStudent, registerTeacher, loginUser, logoutUser };

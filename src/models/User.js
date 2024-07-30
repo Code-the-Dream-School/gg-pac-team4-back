@@ -65,7 +65,7 @@ const UserSchema = new mongoose.Schema({
 
 // Before saving the users, hash the password
 //pre('save') hook. The password hashing is consistently applied anytime a document is saved
-UsersSchema.pre('save', async function(next) {
+UserSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
   
   const salt = await bcrypt.genSalt(10);
@@ -74,7 +74,7 @@ UsersSchema.pre('save', async function(next) {
 });
 
 // Compare the provided password with the users' password
-UsersSchema.methods.comparePassword = async function(candidatePassword) {
+UserSchema.methods.comparePassword = async function(candidatePassword) {
   const isMatch = await bcrypt.compare(candidatePassword, this.password);
   return isMatch;
 };
