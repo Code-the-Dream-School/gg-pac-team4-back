@@ -7,6 +7,7 @@ const {
 } = require("../errors");
 const ForbiddenError = require("../errors/forbidden");
 
+// Search for classes
 const displaySearchClasses = async (req, res) => {
   let { page, limit, search, sortBy, sortOrder } = req.query;
 
@@ -53,6 +54,7 @@ const displaySearchClasses = async (req, res) => {
   }
 };
 
+//Class Details, display only after login
 const getClassDetails = async (req, res) => {
   const { classId } = req.params;
 
@@ -88,6 +90,7 @@ const getClassDetails = async (req, res) => {
   }
 };
 
+//Create a class, only after login
 const createClass = async (req, res) => {
   const createdBy = req.user.userId;
 
@@ -146,6 +149,7 @@ const createClass = async (req, res) => {
   }
 };
 
+//Edit class, only after login and if you are creator
 const editClass = async (req, res) => {
   const { classId } = req.params;
   const userId = req.user.userId;
@@ -190,6 +194,7 @@ const editClass = async (req, res) => {
   }
 };
 
+//Delete a class, only after login and if you are creator
 const deleteClass = async (req, res) => {
   const { classId } = req.params;
   const userId = req.user.userId;

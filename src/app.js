@@ -11,7 +11,6 @@ const authenticationMiddleware = require("./middleware/authentication.js");
 const errorHandlerMiddleware = require("./middleware/error-handler.js");
 const notFound = require("./middleware/notFound.js");
 
-const mainRouter = require("./routes/mainRouter.js");
 const userRouter = require("./routes/userRouter.js");
 const classesRouter = require("./routes/classesRouter.js");
 
@@ -27,7 +26,7 @@ app.use(express.static("public"));
 app.use(favicon(__dirname + "/public/favicon.ico"));
 
 // routes
-app.use('/api/v1', mainRouter, userRouter );
+app.use('/api/v1', userRouter );
 app.use('/api/v1/classes', classesRouter );
 
 
