@@ -29,7 +29,14 @@
     "nodemon": "^2.0.21",
     "prettier": "^3.3.3"
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
   "lint-staged": {
-    "*.{js,css,md}": "prettier --write"
+    "**/*.{js,jsx,ts,tsx,json,css,scss,md}": [
+      "prettier --write"
+    ]
   }
 }
