@@ -5,7 +5,7 @@ const {
   NotFoundError,
   UnauthenticatedError,
 } = require('../errors');
-const ForbiddenError = require('../errors/forbidden');
+const ForbiddenError = require('../errors/forbidden.js');
 
 // Search for classes
 const displaySearchClasses = async (req, res) => {
