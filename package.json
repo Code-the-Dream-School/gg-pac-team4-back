@@ -31,10 +31,5 @@
   },
   "lint-staged": {
     "*.{js,css,md}": "prettier --write"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
   }
 }
