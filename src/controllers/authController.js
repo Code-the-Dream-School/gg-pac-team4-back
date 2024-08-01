@@ -1,13 +1,13 @@
-const User = require("../models/User.js");
-const { calculateAge } = require("../utils/adultValidation.js");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const { StatusCodes } = require("http-status-codes");
-const { BadRequestError, UnauthenticatedError } = require("../errors");
+const User = require('../models/User.js');
+const { calculateAge } = require('../utils/adultValidation.js');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { StatusCodes } = require('http-status-codes');
+const { BadRequestError, UnauthenticatedError } = require('../errors');
 
 const generateToken = (userId) => {
   const secret = process.env.JWT_SECRET;
-  const token = jwt.sign({ userId }, secret, { expiresIn: "1h" });
+  const token = jwt.sign({ userId }, secret, { expiresIn: '1h' });
   return token;
 };
 
@@ -18,7 +18,7 @@ const registerUser = async (req, res, role) => {
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      throw new BadRequestError("User already exists");
+      throw new BadRequestError('User already exists');
     }
 
     const newUser = {
@@ -29,13 +29,13 @@ const registerUser = async (req, res, role) => {
       role,
     };
 
-    if (role === "student") {
+    if (role === 'student') {
       const age = calculateAge(dateOfBirth);
 
       // Checking student age if it's < 16, adultName is required
-      if (age < 16 && (!adultName || adultName.trim() === "")) {
+      if (age < 16 && (!adultName || adultName.trim() === '')) {
         throw new BadRequestError(
-          "Adult name is required for students under 16"
+          'Adult name is required for students under 16'
         );
       }
 
@@ -61,8 +61,8 @@ const registerUser = async (req, res, role) => {
   }
 };
 
-const registerStudent = (req, res) => registerUser(req, res, "student");
-const registerTeacher = (req, res) => registerUser(req, res, "teacher");
+const registerStudent = (req, res) => registerUser(req, res, 'student');
+const registerTeacher = (req, res) => registerUser(req, res, 'teacher');
 
 //Login
 const loginUser = async (req, res) => {
@@ -70,20 +70,20 @@ const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      throw new BadRequestError("Please provide email and password");
+      throw new BadRequestError('Please provide email and password');
     }
     const user = await User.findOne({ email });
 
     if (!user) {
-      throw new UnauthenticatedError("Invalid email");
+      throw new UnauthenticatedError('Invalid email');
     }
     const passwordValid = await bcrypt.compare(password, user.password);
     if (!passwordValid) {
-      throw new UnauthenticatedError("Invalid password");
+      throw new UnauthenticatedError('Invalid password');
     }
     const token = generateToken(user._id);
     res.status(StatusCodes.OK).json({
-      message: "Login successful",
+      message: 'Login successful',
       user: {
         email: user.email,
         firstName: user.firstName,
@@ -94,7 +94,7 @@ const loginUser = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error logging in:", error);
+    console.error('Error logging in:', error);
     const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
     const errorMessage = error.message || 'Error logging in';
     res.status(statusCode).json({ message: errorMessage });
@@ -104,16 +104,16 @@ const loginUser = async (req, res) => {
 //Logout
 const logoutUser = async (req, res) => {
   try {
-    res.clearCookie("token", {
+    res.clearCookie('token', {
       httpOnly: true,
       expires: new Date(Date.now()),
     });
-    res.status(StatusCodes.OK).json({ message: "Logout successful" });
+    res.status(StatusCodes.OK).json({ message: 'Logout successful' });
   } catch (error) {
-    console.error("Error during logout:", err);
+    console.error('Error during logout:', err);
     res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ message: "Logout failed" });
+      .json({ message: 'Logout failed' });
   }
 };
 
