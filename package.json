@@ -4,7 +4,9 @@
   "description": "Back-End Repo for Team 4 of Giraffe/Grackle Practicum",
   "main": "app.js",
   "scripts": {
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "format": "prettier --write .",
+    "prepare": "husky install"
   },
   "author": "",
   "license": "ISC",
@@ -22,6 +24,17 @@
     "morgan": "^1.10.0"
   },
   "devDependencies": {
-    "nodemon": "^2.0.21"
+    "husky": "^9.1.4",
+    "lint-staged": "^15.2.7",
+    "nodemon": "^2.0.21",
+    "prettier": "^3.3.3"
+  },
+  "lint-staged": {
+    "*.{js,css,md}": "prettier --write"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
   }
 }

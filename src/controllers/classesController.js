@@ -1,11 +1,11 @@
-const Class = require("../models/Class");
-const { StatusCodes } = require("http-status-codes");
+const Class = require('../models/Class');
+const { StatusCodes } = require('http-status-codes');
 const {
   BadRequestError,
   NotFoundError,
   UnauthenticatedError,
-} = require("../errors");
-const ForbiddenError = require("../errors/forbidden");
+} = require('../errors');
+const ForbiddenError = require('../errors/forbidden');
 
 // Search for classes
 const displaySearchClasses = async (req, res) => {
@@ -15,10 +15,10 @@ const displaySearchClasses = async (req, res) => {
   limit = Number(limit) || 5;
   const skip = (page - 1) * limit;
 
-  sortBy = sortBy || "classTitle";
-  sortOrder = sortOrder === "desc" ? -1 : 1;
+  sortBy = sortBy || 'classTitle';
+  sortOrder = sortOrder === 'desc' ? -1 : 1;
 
-  const searchRegex = search ? new RegExp(search, "i") : {};
+  const searchRegex = search ? new RegExp(search, 'i') : {};
 
   try {
     let query = {};
@@ -47,10 +47,10 @@ const displaySearchClasses = async (req, res) => {
       currentPage: page,
     });
   } catch (error) {
-    console.error("Error retrieving classes:", error);
+    console.error('Error retrieving classes:', error);
     res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ message: "Internal server error" });
+      .json({ message: 'Internal server error' });
   }
 };
 
@@ -62,7 +62,7 @@ const getClassDetails = async (req, res) => {
     const classDetail = await Class.findById(classId);
 
     if (!classDetail) {
-      throw new NotFoundError("Class does not exist");
+      throw new NotFoundError('Class does not exist');
     }
 
     const response = {
@@ -83,10 +83,10 @@ const getClassDetails = async (req, res) => {
 
     res.status(StatusCodes.OK).json({ class: response });
   } catch (error) {
-    console.error("Error retrieving class details:", error);
+    console.error('Error retrieving class details:', error);
     res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ message: "Internal server error" });
+      .json({ message: 'Internal server error' });
   }
 };
 
@@ -118,7 +118,7 @@ const createClass = async (req, res) => {
     });
     if (existingClass) {
       throw new BadRequestError(
-        "Class with this title and description already exists."
+        'Class with this title and description already exists.'
       );
     }
 
@@ -140,11 +140,11 @@ const createClass = async (req, res) => {
     await newClass.save();
     res
       .status(StatusCodes.CREATED)
-      .json({ message: "Class created successfully" });
+      .json({ message: 'Class created successfully' });
   } catch (error) {
-    console.error("Error creating class:", error);
+    console.error('Error creating class:', error);
     const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
-    const errorMessage = error.message || "Error creating class";
+    const errorMessage = error.message || 'Error creating class';
     res.status(statusCode).json({ error: errorMessage });
   }
 };
@@ -157,12 +157,12 @@ const editClass = async (req, res) => {
     const classToEdit = await Class.findById(classId);
 
     if (!classToEdit) {
-      throw new NotFoundError("Class does not exist");
+      throw new NotFoundError('Class does not exist');
     }
 
     if (!classToEdit.createdBy || classToEdit.createdBy.toString() !== userId) {
       throw new ForbiddenError(
-        "You do not have permission to edit this class."
+        'You do not have permission to edit this class.'
       );
     }
 
@@ -174,7 +174,7 @@ const editClass = async (req, res) => {
     }
 
     Object.entries(req.body).forEach(([key, value]) => {
-      if (key !== "classes") {
+      if (key !== 'classes') {
         updateData[key] = value;
       }
     });
@@ -187,9 +187,9 @@ const editClass = async (req, res) => {
 
     res.status(StatusCodes.OK).json({ project: updatedClass });
   } catch (error) {
-    console.error("Error editing class:", error);
+    console.error('Error editing class:', error);
     const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
-    const errorMessage = error.message || "Internal server error";
+    const errorMessage = error.message || 'Internal server error';
     res.status(statusCode).json({ message: errorMessage });
   }
 };
@@ -202,7 +202,7 @@ const deleteClass = async (req, res) => {
     const classToDelete = await Class.findById(classId);
 
     if (!classToDelete) {
-      throw new NotFoundError("Class does not exist");
+      throw new NotFoundError('Class does not exist');
     }
 
     if (
@@ -210,17 +210,17 @@ const deleteClass = async (req, res) => {
       classToDelete.createdBy.toString() !== userId
     ) {
       throw new ForbiddenError(
-        "You do not have permission to delete this class"
+        'You do not have permission to delete this class'
       );
     }
 
     await Class.findByIdAndDelete(classId);
 
-    res.status(StatusCodes.OK).json({ message: "Class successfully deleted" });
+    res.status(StatusCodes.OK).json({ message: 'Class successfully deleted' });
   } catch (error) {
-    console.error("Error deleting class:", error);
+    console.error('Error deleting class:', error);
     const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
-    const errorMessage = error.message || "Internal server error";
+    const errorMessage = error.message || 'Internal server error';
     res.status(statusCode).json({ message: errorMessage });
   }
 };

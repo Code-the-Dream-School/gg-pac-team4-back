@@ -1,15 +1,15 @@
-const { StatusCodes } = require("http-status-codes");
+const { StatusCodes } = require('http-status-codes');
 
 const errorHandlerMiddleware = (err, req, res, next) => {
   let customError = {
     statusCode: err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR,
-    msg: err.message || "Something went wrong, try again later",
+    msg: err.message || 'Something went wrong, try again later',
   };
 
-  if (err.name === "ValidatorError") {
+  if (err.name === 'ValidatorError') {
     customError.msg = Object.values(err.errors)
       .map((item) => item.message)
-      .join(",");
+      .join(',');
     customError.statusCode = 400;
   }
 
@@ -20,8 +20,8 @@ const errorHandlerMiddleware = (err, req, res, next) => {
     customError.statusCode = 400;
   }
 
-  if (err.name === "CastError") {
-    if (err.path === "_id") {
+  if (err.name === 'CastError') {
+    if (err.path === '_id') {
       customError.msg = `No item is found with id: ${err.value}`;
       customError.statusCode = 404;
     } else {
