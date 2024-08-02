@@ -1,11 +1,13 @@
-const Class = require("../models/Class");
-const { StatusCodes } = require("http-status-codes");
+const Class = require('../models/Class');
+const { StatusCodes } = require('http-status-codes');
 const {
   BadRequestError,
   NotFoundError,
   UnauthenticatedError,
-} = require("../errors");
+} = require('../errors');
+const ForbiddenError = require('../errors/forbidden');
 
+// Search for classes
 const displaySearchClasses = async (req, res) => {
   let { page, limit, search, sortBy, sortOrder } = req.query;
 
@@ -13,10 +15,10 @@ const displaySearchClasses = async (req, res) => {
   limit = Number(limit) || 5;
   const skip = (page - 1) * limit;
 
-  sortBy = sortBy || "classTitle";
-  sortOrder = sortOrder === "desc" ? -1 : 1;
+  sortBy = sortBy || 'classTitle';
+  sortOrder = sortOrder === 'desc' ? -1 : 1;
 
-  const searchRegex = search ? new RegExp(search, "i") : {};
+  const searchRegex = search ? new RegExp(search, 'i') : {};
 
   try {
     let query = {};
@@ -45,14 +47,53 @@ const displaySearchClasses = async (req, res) => {
       currentPage: page,
     });
   } catch (error) {
-    console.error("Error retrieving classes:", error);
+    console.error('Error retrieving classes:', error);
     res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ message: "Internal server error" });
+      .json({ message: 'Internal server error' });
   }
 };
 
+//Class Details, display only after login
+const getClassDetails = async (req, res) => {
+  const { classId } = req.params;
+
+  try {
+    const classDetail = await Class.findById(classId);
+
+    if (!classDetail) {
+      throw new NotFoundError('Class does not exist');
+    }
+
+    const response = {
+      category: classDetail.category,
+      classTitle: classDetail.classTitle,
+      description: classDetail.description,
+      price: classDetail.price,
+      duration: classDetail.duration,
+      ages: classDetail.ages,
+      type: classDetail.type,
+      goal: classDetail.goal,
+      experience: classDetail.experience,
+      other: classDetail.other,
+      availableTime: classDetail.availableTime,
+      createdBy: classDetail.createdBy,
+      likes: classDetail.likes,
+    };
+
+    res.status(StatusCodes.OK).json({ class: response });
+  } catch (error) {
+    console.error('Error retrieving class details:', error);
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: 'Internal server error' });
+  }
+};
+
+//Create a class, only after login
 const createClass = async (req, res) => {
+  const createdBy = req.user.userId;
+
   try {
     const {
       category,
@@ -77,7 +118,7 @@ const createClass = async (req, res) => {
     });
     if (existingClass) {
       throw new BadRequestError(
-        "Class with this title and description already exists."
+        'Class with this title and description already exists.'
       );
     }
 
@@ -93,18 +134,101 @@ const createClass = async (req, res) => {
       experience,
       other,
       availableTime,
+      createdBy,
     });
 
     await newClass.save();
     res
       .status(StatusCodes.CREATED)
-      .json({ message: "Class created successfully" });
+      .json({ message: 'Class created successfully' });
   } catch (error) {
-    console.error("Error creating class:", error);
+    console.error('Error creating class:', error);
     const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
-    const errorMessage = error.message || "Error creating class";
+    const errorMessage = error.message || 'Error creating class';
     res.status(statusCode).json({ error: errorMessage });
   }
 };
 
-module.exports = { displaySearchClasses, createClass };
+//Edit class, only after login and if you are creator
+const editClass = async (req, res) => {
+  const { classId } = req.params;
+  const userId = req.user.userId;
+  try {
+    const classToEdit = await Class.findById(classId);
+
+    if (!classToEdit) {
+      throw new NotFoundError('Class does not exist');
+    }
+
+    if (!classToEdit.createdBy || classToEdit.createdBy.toString() !== userId) {
+      throw new ForbiddenError(
+        'You do not have permission to edit this class.'
+      );
+    }
+
+    const updateData = {};
+    if (req.body.classes) {
+      for (const [key, value] of Object.entries(req.body.classes)) {
+        updateData[`classes.${key}`] = value;
+      }
+    }
+
+    Object.entries(req.body).forEach(([key, value]) => {
+      if (key !== 'classes') {
+        updateData[key] = value;
+      }
+    });
+
+    const updatedClass = await Class.findByIdAndUpdate(
+      classId,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    );
+
+    res.status(StatusCodes.OK).json({ project: updatedClass });
+  } catch (error) {
+    console.error('Error editing class:', error);
+    const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+    const errorMessage = error.message || 'Internal server error';
+    res.status(statusCode).json({ message: errorMessage });
+  }
+};
+
+//Delete a class, only after login and if you are creator
+const deleteClass = async (req, res) => {
+  const { classId } = req.params;
+  const userId = req.user.userId;
+  try {
+    const classToDelete = await Class.findById(classId);
+
+    if (!classToDelete) {
+      throw new NotFoundError('Class does not exist');
+    }
+
+    if (
+      !classToDelete.createdBy ||
+      classToDelete.createdBy.toString() !== userId
+    ) {
+      throw new ForbiddenError(
+        'You do not have permission to delete this class'
+      );
+    }
+
+    await Class.findByIdAndDelete(classId);
+
+    res.status(StatusCodes.OK).json({ message: 'Class successfully deleted' });
+  } catch (error) {
+    console.error('Error deleting class:', error);
+    const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+    const errorMessage = error.message || 'Internal server error';
+    res.status(statusCode).json({ message: errorMessage });
+  }
+};
+
+module.exports = {
+  displaySearchClasses,
+  createClass,
+  getClassDetails,
+  editClass,
+  deleteClass,
+};
