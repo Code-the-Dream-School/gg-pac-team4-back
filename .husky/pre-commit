@@ -1,4 +1,13 @@
-#!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
+# #!/bin/sh
+# . "$(dirname "$0")/_/husky.sh"
+# because  git commit -m"Resolve merge conflicts"
+# husky - DEPRECATED
+
+# Please remove the following two lines from .husky/pre-commit:
+
+# #!/usr/bin/env sh
+# . "$(dirname -- "$0")/_/husky.sh"
+
+# They WILL FAIL in v10.0.0
 
 npx lint-staged
