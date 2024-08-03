@@ -1,37 +1,26 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
-const {
-  registerStudent,
-  registerTeacher,
-} = require('../controllers/authController');
+const userController = require('../controllers/userController');
+const authMiddleware = require('../middleware/authentication');
+const { registerStudent, registerTeacher, loginUser, logoutUser } =
+  authController;
+const { getUsers, getUserById, updateUser, deleteUser } = userController;
 const {
   validateStudent,
   validateTeacher,
 } = require('../middleware/userValidation');
-const userController = require('../controllers/userController');
-const {
-  getUsers,
-  getUserById,
-  updateUser,
-  deleteUser,
-} = require('../controllers/userController');
 
-// POST /api/v1/register/student
+// Authentication routes
 router.post('/register/student', validateStudent, registerStudent);
-
-// POST /api/v1/register/teacher
 router.post('/register/teacher', validateTeacher, registerTeacher);
+router.post('/login', loginUser);
+router.post('/logout', logoutUser);
 
-// POST /api/v1/login
-router.post('/login', authController.loginUser);
-
-// POST /api/v1/logout
-router.post('/logout', authController.logoutUser);
-
-router.get('/users', getUsers);
-router.get('/users/:id', getUserById);
-router.put('/users/:id', updateUser);
-router.delete('/users/:id', deleteUser);
+// User routes
+router.get('/users', authMiddleware, getUsers);
+router.get('/users/:id', authMiddleware, getUserById);
+router.patch('/users/:id', authMiddleware, updateUser);
+router.delete('/users/:id', authMiddleware, deleteUser);
 
 module.exports = router;

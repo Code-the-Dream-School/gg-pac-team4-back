@@ -15,7 +15,6 @@ const authenticationMiddleware = async (req, res, next) => {
     req.user = { userId: payload.userId };
     next();
   } catch (error) {
-    console.error('Authentication invalid', error);
     return res
       .status(StatusCodes.UNAUTHORIZED)
       .json({ message: 'Authentication invalid' });
