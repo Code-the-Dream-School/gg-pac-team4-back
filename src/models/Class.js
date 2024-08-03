@@ -77,7 +77,8 @@ const ClassSchema = new mongoose.Schema(
     ],
     uploadClassImage: {
       type: String,
-      default: null,
+      default:
+        '//https://res.cloudinary.com/dn1ewxfy7/image/upload/v1722706518/cartoon-style-musical-notes_u2tw93.jpg',
     },
     likes: {
       type: Number,
@@ -97,7 +98,7 @@ const ClassSchema = new mongoose.Schema(
           'Acting Skills',
           'Storytelling',
           'Ceramics & Sculpture',
-          'Handycrafts',
+          'Handicrafts',
           '3D & Animation',
           'Games & Hobbies',
         ],
