@@ -43,6 +43,6 @@ const upload = multer({
   limits: {
     fileSize: MAX_SIZE,
   },
-}).fields([{ name: 'uploadClassImage', maxCount: 1 }]);
+}).fields([{ name: 'classImage', maxCount: 1 }]);
 
 module.exports = upload;

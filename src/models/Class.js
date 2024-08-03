@@ -1,5 +1,12 @@
 const mongoose = require('mongoose');
 
+const validateURL = (url) => {
+  if (url === null) {
+    return true;
+  }
+  return urlValidationPattern.test(url);
+};
+
 const ClassSchema = new mongoose.Schema(
   {
     createdBy: {
@@ -75,10 +82,14 @@ const ClassSchema = new mongoose.Schema(
         },
       },
     ],
-    uploadClassImage: {
+    classImageUrl: {
       type: String,
       default:
-        '//https://res.cloudinary.com/dn1ewxfy7/image/upload/v1722706518/cartoon-style-musical-notes_u2tw93.jpg',
+        '//https://res.cloudinary.com/dn1ewxfy7/image/upload/v1722717323/2602291_dc5c66.jpg',
+      validate: [validateURL, 'Please provide a valid URL.'],
+    },
+    classImagePublicId: {
+      type: String,
     },
     likes: {
       type: Number,
