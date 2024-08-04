@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const {
   adultValidator,
@@ -57,6 +58,9 @@ const UserSchema = new mongoose.Schema({
     required: [true, 'Please provide a password'],
     minlength: 6,
   },
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
+
   role: {
     type: String,
     enum: ['student', 'teacher'],
@@ -82,6 +86,27 @@ UserSchema.pre('save', async function (next) {
 UserSchema.methods.comparePassword = async function (candidatePassword) {
   const isMatch = await bcrypt.compare(candidatePassword, this.password);
   return isMatch;
+};
+// Generate a reset password token
+UserSchema.methods.generateResetPasswordToken = function () {
+  const resetToken = crypto.randomBytes(20).toString('hex');
+  this.resetPasswordToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+  this.resetPasswordExpires = Date.now() + 600000; // 10 minutes
+  return resetToken;
+};
+// Check if the reset password token has expired
+UserSchema.methods.isResetPasswordTokenExpired = function () {
+  return this.resetPasswordExpires < Date.now();
+};
+// Reset the password
+UserSchema.methods.resetPassword = function (newPassword) {
+  this.password = newPassword; // Хэшируйте пароль, если это необходимо
+  this.resetPasswordToken = undefined;
+  this.resetPasswordExpires = undefined;
+  return this.save();
 };
 
 module.exports = mongoose.model('User', UserSchema);
