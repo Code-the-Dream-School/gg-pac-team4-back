@@ -16,11 +16,12 @@ const forgotPassword = async (req, res) => {
 
     const resetUrl = `http://localhost:8000/api/v1/reset-password/${resetToken}`;
 
-    const message = `You are receiving this email because you (or someone else) have requested the reset of a password. Please make a put request to: \n\n ${resetUrl}`;
+    const message = `You are receiving this email because you (or someone else) have requested the reset of a password. Please make a post request to: \n\n ${resetUrl}`;
 
+    console.log('Generated Reset Token:', resetToken);
     await sendEmail(user.email, 'Password reset token', message);
 
-    res.status(200).json({ message: 'Email sent' });
+    res.status(200).json({ message: 'Email sent', resetToken });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }

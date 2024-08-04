@@ -31,8 +31,7 @@ router.delete('/users/:id', authMiddleware, deleteUser);
 
 // Forgot password route (Check here)
 router.post('/forgot-password', forgotPassword);
-router.put('/reset-password', resetPassword);
-
+router.post('/reset-password', resetPassword);
 router.get('/reset-password/:token', getResetPasswordPage);
 
 module.exports = router;

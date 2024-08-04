@@ -94,19 +94,20 @@ UserSchema.methods.generateResetPasswordToken = function () {
     .createHash('sha256')
     .update(resetToken)
     .digest('hex');
-  this.resetPasswordExpires = Date.now() + 600000; // 10 minutes
+  this.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
   return resetToken;
 };
 // Check if the reset password token has expired
 UserSchema.methods.isResetPasswordTokenExpired = function () {
-  return this.resetPasswordExpires < Date.now();
+  return this.resetPasswordExpires && this.resetPasswordExpires < Date.now();
 };
+
 // Reset the password
-UserSchema.methods.resetPassword = function (newPassword) {
-  this.password = newPassword; // Хэшируйте пароль, если это необходимо
+UserSchema.methods.resetPassword = async function (newPassword) {
+  this.password = newPassword;
   this.resetPasswordToken = undefined;
   this.resetPasswordExpires = undefined;
-  return this.save();
+  await this.save();
 };
 
 module.exports = mongoose.model('User', UserSchema);
