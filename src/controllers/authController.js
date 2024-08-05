@@ -104,13 +104,31 @@ const loginUser = async (req, res) => {
 //Logout
 const logoutUser = async (req, res) => {
   try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      throw new BadRequestError('Please provide email and password');
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      throw new UnauthenticatedError('Invalid email');
+    }
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      throw new UnauthenticatedError('Invalid credentials');
+    }
+
+    // Clear the cookie
     res.clearCookie('token', {
       httpOnly: true,
       expires: new Date(Date.now()),
     });
+
     res.status(StatusCodes.OK).json({ message: 'Logout successful' });
   } catch (error) {
-    console.error('Error during logout:', err);
+    console.error('Error during logout:', error);
     res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .json({ message: 'Logout failed' });

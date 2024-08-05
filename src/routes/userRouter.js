@@ -18,7 +18,7 @@ const { getUsers, getUserById, updateUser, deleteUser } = userController;
 router.post('/register/student', validateStudent, registerStudent);
 router.post('/register/teacher', validateTeacher, registerTeacher);
 router.post('/login', loginUser);
-router.post('/logout', logoutUser);
+router.post('/logout', authMiddleware, logoutUser);
 
 // User routes for CRUD operations
 router.get('/users', authMiddleware, getUsers);
@@ -30,6 +30,6 @@ router.delete('/users/:id', authMiddleware, deleteUser);
 router.post('/forgot-password', forgotPassword);
 
 // Reset password route (handles JWT based reset)
-router.post('/reset-password', resetPassword);
+router.patch('/reset-password', resetPassword);
 
 module.exports = router;

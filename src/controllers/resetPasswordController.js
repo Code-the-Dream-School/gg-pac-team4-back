@@ -13,7 +13,6 @@ const resetPassword = async (req, res) => {
   try {
     // Decode the token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log('Decoded token:', decoded);
 
     // Find the user
     const user = await User.findOne({
@@ -27,12 +26,10 @@ const resetPassword = async (req, res) => {
 
     // Set the new password and clear the token
     user.password = newPassword;
-    console.log('New hashed password:', user.password);
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     // Save the user
     await user.save();
-    console.log('User saved successfully');
 
     res.status(StatusCodes.OK).json({ message: 'Password reset successful' });
   } catch (error) {
