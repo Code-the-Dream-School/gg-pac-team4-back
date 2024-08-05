@@ -77,9 +77,9 @@ const loginUser = async (req, res) => {
     if (!user) {
       throw new UnauthenticatedError('Invalid email');
     }
-    const passwordValid = await bcrypt.compare(password, user.password);
-    if (!passwordValid) {
-      throw new UnauthenticatedError('Invalid password');
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      throw new UnauthenticatedError('Invalid credentials');
     }
     const token = generateToken(user._id);
     res.status(StatusCodes.OK).json({
