@@ -1,4 +1,4 @@
-const cloudinary = require('cloudinary');
+const cloudinary = require('cloudinary').v2;
 const fs = require('fs').promises;
 const Class = require('../models/Class');
 const { StatusCodes } = require('http-status-codes');
