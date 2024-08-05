@@ -82,32 +82,15 @@ UserSchema.pre('save', async function (next) {
   next();
 });
 
-// Compare the provided password with the users' password
+// Compare password
 UserSchema.methods.comparePassword = async function (candidatePassword) {
   const isMatch = await bcrypt.compare(candidatePassword, this.password);
   return isMatch;
 };
-// Generate a reset password token
-UserSchema.methods.generateResetPasswordToken = function () {
-  const resetToken = crypto.randomBytes(20).toString('hex');
-  this.resetPasswordToken = crypto
-    .createHash('sha256')
-    .update(resetToken)
-    .digest('hex');
-  this.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
-  return resetToken;
-};
+
 // Check if the reset password token has expired
 UserSchema.methods.isResetPasswordTokenExpired = function () {
   return this.resetPasswordExpires && this.resetPasswordExpires < Date.now();
-};
-
-// Reset the password
-UserSchema.methods.resetPassword = async function (newPassword) {
-  this.password = newPassword;
-  this.resetPasswordToken = undefined;
-  this.resetPasswordExpires = undefined;
-  await this.save();
 };
 
 module.exports = mongoose.model('User', UserSchema);

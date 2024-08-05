@@ -11,12 +11,12 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const sendEmail = async (to, subject, text) => {
+const sendEmail = async (to, subject, html) => {
   const mailOptions = {
     from: process.env.GMAIL_USER,
     to,
     subject,
-    text,
+    html, // Используем html вместо text
   };
 
   try {
@@ -24,6 +24,7 @@ const sendEmail = async (to, subject, text) => {
     console.log('Email sent successfully');
   } catch (error) {
     console.error('Error sending email:', error);
+    throw new Error('Error sending email');
   }
 };
 

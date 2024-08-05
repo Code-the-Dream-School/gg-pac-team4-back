@@ -20,14 +20,14 @@ const getResetPasswordPage = (req, res) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            resetToken: token,
+            token,
             newPassword,
           }),
         });
 
         const data = await response.json();
         if (data.message === 'Password reset successful') {
-          window.location.href = data.redirectUrl;
+          window.location.href = '/login'; // Redirect to login page or another page
         } else {
           alert(data.message);
         }

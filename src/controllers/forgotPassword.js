@@ -1,30 +1,42 @@
 const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
+const jwt = require('jsonwebtoken');
+const { StatusCodes } = require('http-status-codes');
+const { BadRequestError } = require('../errors');
 
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new BadRequestError('User with this email does not exist');
+  }
+
+  const resetToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+    expiresIn: '1h',
+  });
+  user.resetPasswordToken = resetToken;
+  user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+  await user.save();
+
+  const resetUrl = `http://localhost:8000/api/v1/reset-password/${resetToken}`;
+  const message = `
+    <p>You are receiving this email because you (or someone else) have requested the reset of a password. Please click the link below to reset your password:</p>
+    <a href="${resetUrl}">Reset Password</a>
+    <p>If you did not request this, please ignore this email.</p>
+  `;
 
   try {
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    const resetToken = user.generateResetPasswordToken();
-    await user.save();
-    console.log('Generated Reset Token:', resetToken);
-
-    const resetUrl = `http://localhost:8000/api/v1/reset-password/${resetToken}`;
-
-    const message = `You are receiving this email because you (or someone else) have requested the reset of a password. Please make a post request to: \n\n ${resetUrl}`;
-
-    console.log('Generated Reset Token:', resetToken);
     await sendEmail(user.email, 'Password reset token', message);
-
-    res.status(200).json({ message: 'Email sent', resetToken });
+    res
+      .status(StatusCodes.OK)
+      .json({ message: 'Email sent', token: resetToken });
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    throw new BadRequestError('Email could not be sent');
   }
 };
 

@@ -23,15 +23,18 @@ router.post('/register/teacher', validateTeacher, registerTeacher);
 router.post('/login', loginUser);
 router.post('/logout', logoutUser);
 
-// User routes
+// User routes for CRUD operations
 router.get('/users', authMiddleware, getUsers);
 router.get('/users/:id', authMiddleware, getUserById);
 router.patch('/users/:id', authMiddleware, updateUser);
 router.delete('/users/:id', authMiddleware, deleteUser);
 
-// Forgot password route (Check here)
+// Forgot password route (handles email sending)
 router.post('/forgot-password', forgotPassword);
-router.post('/reset-password', resetPassword);
-router.get('/reset-password/:token', getResetPasswordPage);
 
+// Reset password route (handles JWT based reset)
+router.post('/reset-password', resetPassword);
+
+// Route to get reset password page
+router.get('/reset-password/:token', getResetPasswordPage);
 module.exports = router;
