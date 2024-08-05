@@ -14,7 +14,12 @@ router
     upload.single('classImage'),
     classesController.createClass
   )
-  .patch('/:classId', authenticationMiddleware, classesController.editClass)
+  .patch(
+    '/:classId',
+    authenticationMiddleware,
+    upload.single('classImage'),
+    classesController.editClass
+  )
   .delete('/:classId', authenticationMiddleware, classesController.deleteClass);
 
 module.exports = router;

@@ -81,6 +81,7 @@ const getClassDetails = async (req, res) => {
       availableTime: classDetail.availableTime,
       createdBy: classDetail.createdBy,
       likes: classDetail.likes,
+      classImageUrl: classDetail.classImageUrl,
     };
 
     res.status(StatusCodes.OK).json({ class: response });
@@ -188,9 +189,29 @@ const editClass = async (req, res) => {
     }
 
     const updateData = {};
-    if (req.body.classes) {
-      for (const [key, value] of Object.entries(req.body.classes)) {
-        updateData[`classes.${key}`] = value;
+
+    if (req.file) {
+      try {
+        // Deleting the old image from Cloudinary if it exists
+        if (
+          classToEdit.classImagePublicId &&
+          classToEdit.classImagePublicId !== 'default_image_public'
+        ) {
+          await cloudinary.uploader.destroy(classToEdit.classImagePublicId);
+        }
+
+        // Uploading new image to Cloudinary
+        const filePath = req.file.path;
+        const classImageResponse = await cloudinary.uploader.upload(filePath);
+        await fs.unlink(filePath); // Cleaning up the temporary file
+
+        // Updating image fields
+        updateData.classImageUrl = classImageResponse.secure_url;
+        updateData.classImagePublicId = classImageResponse.public_id;
+      } catch (error) {
+        return res
+          .status(500)
+          .json({ message: 'Failed to upload image', error: error.message });
       }
     }
 
