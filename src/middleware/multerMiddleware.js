@@ -1,6 +1,6 @@
 const multer = require('multer');
 const path = require('path');
-const MAX_SIZE = 1024 * 1024 * 5; // 5MB size of image
+const MAX_SIZE = 1024 * 1024 * 8; // 8MB size of image
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -17,11 +17,12 @@ const fileFilter = (req, file, cb) => {
   if (
     file.mimetype === 'image/jpeg' ||
     file.mimetype === 'image/png' ||
-    file.mimetype === 'image/avif'
+    file.mimetype === 'image/avif' ||
+    file.mimetype === 'image/webp'
   ) {
     if (file.size > MAX_SIZE) {
       cb(
-        new Error('Image size too large, max 5MB allowed', 'LIMIT_FILE_SIZE'),
+        new Error('Image size too large, max 8MB allowed', 'LIMIT_FILE_SIZE'),
         false
       );
     }
@@ -43,6 +44,6 @@ const upload = multer({
   limits: {
     fileSize: MAX_SIZE,
   },
-}).fields([{ name: 'classImage', maxCount: 1 }]);
+});
 
 module.exports = upload;

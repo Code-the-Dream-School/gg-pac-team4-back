@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 
+const urlValidationPattern = /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/;
+
 const validateURL = (url) => {
   if (url === null) {
     return true;
@@ -85,11 +87,15 @@ const ClassSchema = new mongoose.Schema(
     classImageUrl: {
       type: String,
       default:
-        '//https://res.cloudinary.com/dn1ewxfy7/image/upload/v1722717323/2602291_dc5c66.jpg',
-      validate: [validateURL, 'Please provide a valid URL.'],
+        'https://res.cloudinary.com/dn1ewxfy7/image/upload/v1722717323/2602291_dc5c66.jpg',
+      validate: {
+        validator: validateURL,
+        message: 'Invalid URL format',
+      },
     },
     classImagePublicId: {
       type: String,
+      default: 'default_class_image',
     },
     likes: {
       type: Number,

@@ -1,3 +1,5 @@
+const cloudinary = require('cloudinary').v2;
+const fs = require('fs').promises;
 const Class = require('../models/Class');
 const { StatusCodes } = require('http-status-codes');
 const {
@@ -122,6 +124,23 @@ const createClass = async (req, res) => {
       );
     }
 
+    let classImageUrl;
+    let classImagePublicId;
+
+    if (req.file) {
+      try {
+        const filePath = req.file.path;
+        const classImageResponse = await cloudinary.uploader.upload(filePath);
+        await fs.unlink(filePath); // Remove the file from local storage
+        classImageUrl = classImageResponse.secure_url;
+        classImagePublicId = classImageResponse.public_id;
+      } catch (error) {
+        return res
+          .status(500)
+          .json({ message: 'Failed to upload image', error: error.message });
+      }
+    }
+
     const newClass = new Class({
       category,
       classTitle,
@@ -135,6 +154,8 @@ const createClass = async (req, res) => {
       other,
       availableTime,
       createdBy,
+      classImageUrl,
+      classImagePublicId,
     });
 
     await newClass.save();
