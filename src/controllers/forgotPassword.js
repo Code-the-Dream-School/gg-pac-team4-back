@@ -13,6 +13,7 @@ const forgotPassword = async (req, res) => {
 
     const resetToken = user.generateResetPasswordToken();
     await user.save();
+    console.log('Generated Reset Token:', resetToken);
 
     const resetUrl = `http://localhost:8000/api/v1/reset-password/${resetToken}`;
 
