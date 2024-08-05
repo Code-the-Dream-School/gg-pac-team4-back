@@ -1,4 +1,4 @@
-const cloudinary = require('cloudinary').v2;
+const cloudinary = require('cloudinary');
 const fs = require('fs').promises;
 const Class = require('../models/Class');
 const { StatusCodes } = require('http-status-codes');
@@ -254,6 +254,9 @@ const deleteClass = async (req, res) => {
       throw new ForbiddenError(
         'You do not have permission to delete this class'
       );
+    }
+    if (classToDelete.classImagePublicId !== 'default_class_image') {
+      await cloudinary.uploader.destroy(classToDelete.classImagePublicId);
     }
 
     await Class.findByIdAndDelete(classId);
