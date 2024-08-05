@@ -6,9 +6,6 @@ const forgotPassword = require('../controllers/forgotPassword');
 const resetPassword = require('../controllers/resetPasswordController');
 const authMiddleware = require('../middleware/authentication');
 const {
-  getResetPasswordPage,
-} = require('../controllers/resetPasswordPageController');
-const {
   validateStudent,
   validateTeacher,
 } = require('../middleware/userValidation');
@@ -35,6 +32,4 @@ router.post('/forgot-password', forgotPassword);
 // Reset password route (handles JWT based reset)
 router.post('/reset-password', resetPassword);
 
-// Route to get reset password page
-router.get('/reset-password/:token', getResetPasswordPage);
 module.exports = router;
