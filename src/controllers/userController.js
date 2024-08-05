@@ -85,7 +85,7 @@ const deleteUser = [
   authenticationMiddleware,
   async (req, res) => {
     try {
-      const user = await User.findByIdAndDelete(req.params.id);
+      const user = await User.findById(req.params.id);
       if (!user) {
         throw new NotFoundError('User does not exist');
       }
@@ -94,8 +94,10 @@ const deleteUser = [
           'You do not have permission to delete this user profile'
         );
       }
+      await user.remove(); // delete user from the database after checking the user id
       res.status(StatusCodes.OK).json({ message: 'User deleted successfully' });
     } catch (error) {
+      console.error('Error deleting user:', error);
       res
         .status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR)
         .json({ error: error.message });
