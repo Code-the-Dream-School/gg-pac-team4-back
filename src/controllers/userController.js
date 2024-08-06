@@ -94,7 +94,7 @@ const deleteUser = [
           'You do not have permission to delete this user profile'
         );
       }
-      await user.remove(); // delete user from the database after checking the user id
+      await User.findByIdAndDelete(user.id); // delete user from the database after checking the user id
       res.status(StatusCodes.OK).json({ message: 'User deleted successfully' });
     } catch (error) {
       console.error('Error deleting user:', error);
