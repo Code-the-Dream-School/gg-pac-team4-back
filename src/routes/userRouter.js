@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
 const userController = require('../controllers/userController');
-const authMiddleware = require('../middleware/authentication');
+const authenticationMiddleware = require('../middleware/authentication');
 const { registerStudent, registerTeacher, loginUser, logoutUser } =
   authController;
 const { getUsers, getUserById, updateUser, deleteUser } = userController;
@@ -15,12 +15,13 @@ const {
 router.post('/register/student', validateStudent, registerStudent);
 router.post('/register/teacher', validateTeacher, registerTeacher);
 router.post('/login', loginUser);
-router.post('/logout', logoutUser);
+router.post('/logout', authenticationMiddleware, logoutUser);
 
 // User routes
-router.get('/users', authMiddleware, getUsers);
-router.get('/users/:id', authMiddleware, getUserById);
-router.patch('/users/:id', authMiddleware, updateUser);
-router.delete('/users/:id', authMiddleware, deleteUser);
+router.use(authenticationMiddleware); //all routes below will use authenticationMiddleware
+router.get('/users', getUsers);
+router.get('/users/:id', getUserById);
+router.patch('/users/:id', updateUser);
+router.delete('/users/:id', deleteUser);
 
 module.exports = router;

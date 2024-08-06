@@ -79,7 +79,7 @@ const loginUser = async (req, res) => {
     }
     const passwordValid = await bcrypt.compare(password, user.password);
     if (!passwordValid) {
-      throw new UnauthenticatedError('Invalid password');
+      throw new UnauthenticatedError('Invalid credentials');
     }
     const token = generateToken(user._id);
     res.status(StatusCodes.OK).json({
