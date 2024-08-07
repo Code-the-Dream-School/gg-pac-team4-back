@@ -2,33 +2,29 @@ const User = require('../models/User');
 const { StatusCodes } = require('http-status-codes');
 const paginateAndSort = require('../utils/paginationSorting');
 const { NotFoundError } = require('../errors');
-const authenticationMiddleware = require('../middleware/authentication');
 const UnauthenticatedError = require('../errors/unauthenticated');
 
 // Get all users with pagination
-const getUsers = [
-  authenticationMiddleware,
-  async (req, res) => {
-    try {
-      const { query, page, limit, sortBy, sortOrder } = req.query;
-      const parsedQuery = JSON.parse(query || '{}'); // Parse the query string to an object
-      const result = await paginateAndSort(
-        User,
-        parsedQuery,
-        page,
-        limit,
-        sortBy,
-        sortOrder
-      );
-      res.status(StatusCodes.OK).json(result);
-    } catch (error) {
-      console.error('Error retrieving users:', error);
-      res
-        .status(StatusCodes.INTERNAL_SERVER_ERROR)
-        .json({ message: 'Internal server error' });
-    }
-  },
-];
+const getUsers = async (req, res) => {
+  try {
+    const { query, page, limit, sortBy, sortOrder } = req.query;
+    const parsedQuery = JSON.parse(query || '{}'); // Parse the query string to an object
+    const result = await paginateAndSort(
+      User,
+      parsedQuery,
+      page,
+      limit,
+      sortBy,
+      sortOrder
+    );
+    res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    console.error('Error retrieving users:', error);
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: 'Internal server error' });
+  }
+};
 
 // Get a user by ID
 const getUserById = async (req, res) => {
