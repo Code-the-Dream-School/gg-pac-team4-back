@@ -4,7 +4,7 @@ const authController = require('../controllers/authController');
 const userController = require('../controllers/userController');
 const forgotPassword = require('../controllers/forgotPassword');
 const resetPassword = require('../controllers/resetPasswordController');
-const authMiddleware = require('../middleware/authentication');
+const authenticationMiddleware = require('../middleware/authentication');
 const {
   validateStudent,
   validateTeacher,
@@ -18,18 +18,13 @@ const { getUsers, getUserById, updateUser, deleteUser } = userController;
 router.post('/register/student', validateStudent, registerStudent);
 router.post('/register/teacher', validateTeacher, registerTeacher);
 router.post('/login', loginUser);
-router.post('/logout', authMiddleware, logoutUser);
+router.post('/logout', authenticationMiddleware, logoutUser);
 
-// User routes for CRUD operations
-router.get('/users', authMiddleware, getUsers);
-router.get('/users/:id', authMiddleware, getUserById);
-router.patch('/users/:id', authMiddleware, updateUser);
-router.delete('/users/:id', authMiddleware, deleteUser);
-
-// Forgot password route (handles email sending)
-router.post('/forgot-password', forgotPassword);
-
-// Reset password route (handles JWT based reset)
-router.patch('/reset-password', resetPassword);
+// User routes
+router.use(authenticationMiddleware); //all routes below will use authenticationMiddleware
+router.get('/users', getUsers);
+router.get('/users/:id', getUserById);
+router.patch('/users/:id', updateUser);
+router.delete('/users/:id', deleteUser);
 
 module.exports = router;
