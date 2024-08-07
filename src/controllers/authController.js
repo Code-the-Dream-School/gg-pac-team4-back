@@ -18,7 +18,9 @@ const registerUser = async (req, res, role) => {
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      throw new BadRequestError('User already exists');
+      throw new BadRequestError(
+        'This email is already taken. If you forgot your password, please use the password recovery option.'
+      );
     }
 
     const newUser = {
@@ -79,7 +81,7 @@ const loginUser = async (req, res) => {
     }
     const passwordValid = await bcrypt.compare(password, user.password);
     if (!passwordValid) {
-      throw new UnauthenticatedError('Invalid password');
+      throw new UnauthenticatedError('Invalid credentials');
     }
     const token = generateToken(user._id);
     res.status(StatusCodes.OK).json({

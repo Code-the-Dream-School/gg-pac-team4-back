@@ -8,7 +8,6 @@ const favicon = require('express-favicon');
 const logger = require('morgan');
 const cloudinary = require('cloudinary').v2;
 
-const authenticationMiddleware = require('./middleware/authentication.js');
 const errorHandlerMiddleware = require('./middleware/error-handler.js');
 const notFound = require('./middleware/notFound.js');
 
