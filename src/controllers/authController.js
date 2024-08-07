@@ -18,7 +18,9 @@ const registerUser = async (req, res, role) => {
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      throw new BadRequestError('User already exists');
+      throw new BadRequestError(
+        'This email is already taken. If you forgot your password, please use the password recovery option.'
+      );
     }
 
     const newUser = {
