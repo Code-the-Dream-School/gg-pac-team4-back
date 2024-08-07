@@ -1,5 +1,14 @@
 const mongoose = require('mongoose');
 
+const urlValidationPattern = /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/;
+
+const validateURL = (url) => {
+  if (url === null) {
+    return true;
+  }
+  return urlValidationPattern.test(url);
+};
+
 const ClassSchema = new mongoose.Schema(
   {
     createdBy: {
@@ -75,9 +84,18 @@ const ClassSchema = new mongoose.Schema(
         },
       },
     ],
-    uploadClassImage: {
+    classImageUrl: {
       type: String,
-      default: null,
+      default:
+        'https://res.cloudinary.com/dn1ewxfy7/image/upload/v1722717323/2602291_dc5c66.jpg',
+      validate: {
+        validator: validateURL,
+        message: 'Invalid URL format',
+      },
+    },
+    classImagePublicId: {
+      type: String,
+      default: 'default_class_image',
     },
     likes: {
       type: Number,
@@ -89,15 +107,17 @@ const ClassSchema = new mongoose.Schema(
       enum: {
         values: [
           'Music',
-          'Art',
+          'Arts',
           'Dance',
           'Photography',
-          'Film & Video',
+          'Film Production',
           'Design',
-          'Theatre',
-          'Literature',
-          'Ceramics',
-          'Crafts',
+          'Acting Skills',
+          'Storytelling',
+          'Ceramics & Sculpture',
+          'Handicrafts',
+          '3D & Animation',
+          'Games & Hobbies',
         ],
       },
     },

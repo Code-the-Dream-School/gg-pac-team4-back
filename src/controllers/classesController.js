@@ -1,3 +1,5 @@
+const cloudinary = require('cloudinary').v2;
+const fs = require('fs').promises;
 const Class = require('../models/Class');
 const { StatusCodes } = require('http-status-codes');
 const {
@@ -79,6 +81,7 @@ const getClassDetails = async (req, res) => {
       availableTime: classDetail.availableTime,
       createdBy: classDetail.createdBy,
       likes: classDetail.likes,
+      classImageUrl: classDetail.classImageUrl,
     };
 
     res.status(StatusCodes.OK).json({ class: response });
@@ -122,6 +125,23 @@ const createClass = async (req, res) => {
       );
     }
 
+    let classImageUrl;
+    let classImagePublicId;
+
+    if (req.file) {
+      try {
+        const filePath = req.file.path;
+        const classImageResponse = await cloudinary.uploader.upload(filePath);
+        await fs.unlink(filePath); // Remove the file from local storage
+        classImageUrl = classImageResponse.secure_url;
+        classImagePublicId = classImageResponse.public_id;
+      } catch (error) {
+        return res
+          .status(500)
+          .json({ message: 'Failed to upload image', error: error.message });
+      }
+    }
+
     const newClass = new Class({
       category,
       classTitle,
@@ -135,6 +155,8 @@ const createClass = async (req, res) => {
       other,
       availableTime,
       createdBy,
+      classImageUrl,
+      classImagePublicId,
     });
 
     await newClass.save();
@@ -167,9 +189,29 @@ const editClass = async (req, res) => {
     }
 
     const updateData = {};
-    if (req.body.classes) {
-      for (const [key, value] of Object.entries(req.body.classes)) {
-        updateData[`classes.${key}`] = value;
+
+    if (req.file) {
+      try {
+        // Deleting the old image from Cloudinary if it exists
+        if (
+          classToEdit.classImagePublicId &&
+          classToEdit.classImagePublicId !== 'default_image_public'
+        ) {
+          await cloudinary.uploader.destroy(classToEdit.classImagePublicId);
+        }
+
+        // Uploading new image to Cloudinary
+        const filePath = req.file.path;
+        const classImageResponse = await cloudinary.uploader.upload(filePath);
+        await fs.unlink(filePath); // Cleaning up the temporary file
+
+        // Updating image fields
+        updateData.classImageUrl = classImageResponse.secure_url;
+        updateData.classImagePublicId = classImageResponse.public_id;
+      } catch (error) {
+        return res
+          .status(500)
+          .json({ message: 'Failed to upload image', error: error.message });
       }
     }
 
@@ -212,6 +254,9 @@ const deleteClass = async (req, res) => {
       throw new ForbiddenError(
         'You do not have permission to delete this class'
       );
+    }
+    if (classToDelete.classImagePublicId !== 'default_class_image') {
+      await cloudinary.uploader.destroy(classToDelete.classImagePublicId);
     }
 
     await Class.findByIdAndDelete(classId);
