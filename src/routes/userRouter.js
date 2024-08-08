@@ -18,7 +18,11 @@ const { getUsers, getUserById, updateUser, deleteUser } = userController;
 router.post('/register/student', validateStudent, registerStudent);
 router.post('/register/teacher', validateTeacher, registerTeacher);
 router.post('/login', loginUser);
-router.post('/logout', authenticationMiddleware, logoutUser);
+router.post('/logout', logoutUser);
+
+// Password reset routes
+router.post('/forgot-password', forgotPassword);
+router.patch('/reset-password', resetPassword);
 
 // User routes
 router.use(authenticationMiddleware); //all routes below will use authenticationMiddleware
