@@ -57,6 +57,10 @@ const UserSchema = new mongoose.Schema({
     required: [true, 'Please provide a password'],
     minlength: 6,
   },
+  passwordChangedAt: Date,
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
+
   role: {
     type: String,
     enum: ['student', 'teacher'],
@@ -75,13 +79,30 @@ UserSchema.pre('save', async function (next) {
 
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
+  this.passwordChangedAt = Date.now() - 1000; // Password changed 1 second ago
   next();
 });
 
-// Compare the provided password with the users' password
+// Compare password
 UserSchema.methods.comparePassword = async function (candidatePassword) {
   const isMatch = await bcrypt.compare(candidatePassword, this.password);
   return isMatch;
 };
 
+// Check if the reset password token has expired
+UserSchema.methods.isResetPasswordTokenExpired = function () {
+  return this.resetPasswordExpires && this.resetPasswordExpires < Date.now();
+};
+
+// Check if the password was changed after the token was issued
+UserSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
+  if (this.passwordChangedAt) {
+    const changedTimestamp = parseInt(
+      this.passwordChangedAt.getTime() / 1000,
+      10
+    );
+    return JWTTimestamp < changedTimestamp;
+  }
+  return false; // False means NOT changed
+};
 module.exports = mongoose.model('User', UserSchema);
