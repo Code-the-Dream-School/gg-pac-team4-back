@@ -13,6 +13,5 @@
       "dest": "back/$1"
     }
   ],
-  "buildCommand": "npm install && npm run build",
-  "startCommand": "npm run dev"
+  "buildCommand": "npm install"
 }
