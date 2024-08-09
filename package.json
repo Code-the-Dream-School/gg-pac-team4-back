@@ -2,12 +2,11 @@
   "name": "gg-practicum-team-4-back",
   "version": "1.0.0",
   "description": "Back-End Repo for Team 4 of Giraffe/Grackle Practicum",
-  "main": "src/app.js",
+  "main": "app.js",
   "scripts": {
-    "dev": "node src/server.js",
+    "dev": "nodemon src/server.js",
     "format": "prettier --write .",
-    "prepare": "husky install",
-    "start": "node src/server.js"
+    "prepare": "husky install"
   },
   "author": "",
   "license": "ISC",
