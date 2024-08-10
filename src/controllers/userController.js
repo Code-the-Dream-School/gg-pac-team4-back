@@ -61,7 +61,7 @@ const updateUser = async (req, res) => {
         // Deleting the old image from Cloudinary if it exists
         if (
           user.profileImagePublicId &&
-          user.profileImagePublicId !== 'default_image_public'
+          user.profileImagePublicId !== 'default_profile_image'
         ) {
           await cloudinary.uploader.destroy(user.profileImagePublicId);
         }
@@ -75,12 +75,10 @@ const updateUser = async (req, res) => {
         user.profileImageUrl = profileImageResponse.secure_url;
         user.profileImagePublicId = profileImageResponse.public_id;
       } catch (error) {
-        return res
-          .status(500)
-          .json({
-            message: 'Failed to upload profile image',
-            error: error.message,
-          });
+        return res.status(500).json({
+          message: 'Failed to upload profile image',
+          error: error.message,
+        });
       }
     }
 

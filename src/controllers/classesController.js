@@ -195,7 +195,7 @@ const editClass = async (req, res) => {
         // Deleting the old image from Cloudinary if it exists
         if (
           classToEdit.classImagePublicId &&
-          classToEdit.classImagePublicId !== 'default_image_public'
+          classToEdit.classImagePublicId !== 'default_class_image'
         ) {
           await cloudinary.uploader.destroy(classToEdit.classImagePublicId);
         }
@@ -211,7 +211,10 @@ const editClass = async (req, res) => {
       } catch (error) {
         return res
           .status(500)
-          .json({ message: 'Failed to upload image', error: error.message });
+          .json({
+            message: 'Failed to upload class image',
+            error: error.message,
+          });
       }
     }
 
