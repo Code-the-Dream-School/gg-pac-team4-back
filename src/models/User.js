@@ -102,8 +102,39 @@ const UserSchema = new mongoose.Schema({
         'Games & Hobbies',
       ],
     },
-    required: function () {
-      return this.role === 'teacher';
+    validate: {
+      validator: function (value) {
+        // Ensure 'specialty' field is provided only for teachers
+        return this.role === 'teacher' || (this.role === 'student' && !value);
+      },
+      message: 'Specialty field should only be set for teachers',
+    },
+    select: false,
+  },
+  interests: {
+    type: [String],
+    enum: {
+      values: [
+        'Music',
+        'Arts',
+        'Dance',
+        'Photography',
+        'Film Production',
+        'Design',
+        'Acting Skills',
+        'Storytelling',
+        'Ceramics & Sculpture',
+        'Handicrafts',
+        '3D & Animation',
+        'Games & Hobbies',
+      ],
+    },
+    validate: {
+      validator: function (value) {
+        // Ensure 'interests' field is provided only for students
+        return this.role === 'student' || (this.role === 'teacher' && !value);
+      },
+      message: 'Interests field should only be set for students',
     },
     select: false,
   },
@@ -111,8 +142,12 @@ const UserSchema = new mongoose.Schema({
     type: String,
     maxlength: [200, 'Education cannot exceed 200 characters'],
     default: '',
-    required: function () {
-      return this.role === 'teacher';
+    validate: {
+      validator: function (value) {
+        // Ensure 'education' field is provided only for teachers
+        return this.role === 'teacher' || (this.role === 'student' && !value);
+      },
+      message: 'Education field should only be set for teachers',
     },
     select: false,
   },
@@ -120,15 +155,6 @@ const UserSchema = new mongoose.Schema({
     type: String,
     maxlength: [300, 'About cannot exceed 300 characters'],
     default: '',
-  },
-  interestStudent: {
-    type: String,
-    maxlength: [200, 'Interests cannot exceed 200 characters'],
-    default: '',
-    required: function () {
-      return this.role === 'student';
-    },
-    select: false,
   },
 });
 
@@ -165,4 +191,5 @@ UserSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   }
   return false; // False means NOT changed
 };
+
 module.exports = mongoose.model('User', UserSchema);
