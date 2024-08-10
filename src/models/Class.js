@@ -1,13 +1,5 @@
 const mongoose = require('mongoose');
-
-const urlValidationPattern = /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/;
-
-const validateURL = (url) => {
-  if (url === null) {
-    return true;
-  }
-  return urlValidationPattern.test(url);
-};
+const { validateURL } = require('../utils/urlValidation');
 
 const ClassSchema = new mongoose.Schema(
   {

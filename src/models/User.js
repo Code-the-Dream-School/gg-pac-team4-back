@@ -5,6 +5,7 @@ const {
   adultNameFirstAndLast,
 } = require('../utils/adultValidation');
 const { lettersOnlyValidator } = require('../utils/letterValidation.js');
+const { validateURL } = require('../utils/urlValidation.js');
 
 // Define the Users schema
 const UserSchema = new mongoose.Schema({
@@ -69,6 +70,38 @@ const UserSchema = new mongoose.Schema({
   subject: {
     type: String,
     validate: lettersOnlyValidator,
+  },
+  profileImageUrl: {
+    type: String,
+    default:
+      'https://res.cloudinary.com/dn1ewxfy7/image/upload/v1722717323/55055_eqqnfd.jpg',
+    validate: {
+      validator: validateURL,
+      message: 'Invalid URL format',
+    },
+  },
+  profileImagePublicId: {
+    type: String,
+    default: 'default_profile_image',
+  },
+  specialty: {
+    type: [String],
+    enum: {
+      values: [
+        'Music',
+        'Arts',
+        'Dance',
+        'Photography',
+        'Film Production',
+        'Design',
+        'Acting Skills',
+        'Storytelling',
+        'Ceramics & Sculpture',
+        'Handicrafts',
+        '3D & Animation',
+        'Games & Hobbies',
+      ],
+    },
   },
 });
 
