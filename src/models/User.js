@@ -102,6 +102,33 @@ const UserSchema = new mongoose.Schema({
         'Games & Hobbies',
       ],
     },
+    required: function () {
+      return this.role === 'teacher';
+    },
+    select: false,
+  },
+  education: {
+    type: String,
+    maxlength: [200, 'Education cannot exceed 200 characters'],
+    default: '',
+    required: function () {
+      return this.role === 'teacher';
+    },
+    select: false,
+  },
+  aboutUser: {
+    type: String,
+    maxlength: [300, 'About cannot exceed 300 characters'],
+    default: '',
+  },
+  interestStudent: {
+    type: String,
+    maxlength: [200, 'Interests cannot exceed 200 characters'],
+    default: '',
+    required: function () {
+      return this.role === 'student';
+    },
+    select: false,
   },
 });
 
