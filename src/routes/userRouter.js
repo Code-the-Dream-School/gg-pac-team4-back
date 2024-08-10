@@ -13,6 +13,7 @@ const {
 const { registerStudent, registerTeacher, loginUser, logoutUser } =
   authController;
 const { getUsers, getUserById, updateUser, deleteUser } = userController;
+const upload = require('../middleware/multerMiddleware');
 
 // Authentication routes
 router.post('/register/student', validateStudent, registerStudent);
@@ -28,7 +29,12 @@ router.patch('/reset-password', resetPassword);
 // router.use(authenticationMiddleware); //all routes below will use authenticationMiddleware
 router.get('/users', authenticationMiddleware, getUsers);
 router.get('/users/:id', authenticationMiddleware, getUserById);
-router.patch('/users/:id', authenticationMiddleware, updateUser);
+router.patch(
+  '/users/:id',
+  authenticationMiddleware,
+  upload.single('profileImage'),
+  updateUser
+);
 router.delete('/users/:id', authenticationMiddleware, deleteUser);
 
 module.exports = router;

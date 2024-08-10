@@ -1,3 +1,5 @@
+const cloudinary = require('cloudinary').v2;
+const fs = require('fs').promises;
 const User = require('../models/User');
 const { StatusCodes } = require('http-status-codes');
 const paginateAndSort = require('../utils/paginationSorting');
@@ -53,6 +55,35 @@ const updateUser = async (req, res) => {
         'You do not have permission to edit this user profile'
       );
     }
+
+    if (req.file) {
+      try {
+        // Deleting the old image from Cloudinary if it exists
+        if (
+          user.profileImagePublicId &&
+          user.profileImagePublicId !== 'default_image_public'
+        ) {
+          await cloudinary.uploader.destroy(user.profileImagePublicId);
+        }
+
+        // Uploading new image to Cloudinary
+        const filePath = req.file.path;
+        const profileImageResponse = await cloudinary.uploader.upload(filePath);
+        await fs.unlink(filePath); // Cleaning up the temporary file
+
+        // Updating image fields
+        user.profileImageUrl = profileImageResponse.secure_url;
+        user.profileImagePublicId = profileImageResponse.public_id;
+      } catch (error) {
+        return res
+          .status(500)
+          .json({
+            message: 'Failed to upload profile image',
+            error: error.message,
+          });
+      }
+    }
+
     // Update user fields manually
     Object.keys(req.body).forEach((key) => {
       user[key] = req.body[key];
@@ -82,6 +113,11 @@ const deleteUser = async (req, res) => {
         'You do not have permission to delete this user profile'
       );
     }
+
+    if (user.profileImagePublicId !== 'default_profile_image') {
+      await cloudinary.uploader.destroy(user.profileImagePublicId);
+    }
+
     await User.findByIdAndDelete(user.id); // delete user from the database after checking the user id
     res.status(StatusCodes.OK).json({ message: 'User deleted successfully' });
   } catch (error) {

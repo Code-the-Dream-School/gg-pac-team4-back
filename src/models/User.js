@@ -105,7 +105,7 @@ const UserSchema = new mongoose.Schema({
     validate: {
       validator: function (value) {
         // Ensure 'specialty' field is provided only for teachers
-        return this.role === 'teacher' || (this.role === 'student' && !value);
+        return this.role === 'teacher' || value.length === 0;
       },
       message: 'Specialty field should only be set for teachers',
     },
@@ -132,7 +132,7 @@ const UserSchema = new mongoose.Schema({
     validate: {
       validator: function (value) {
         // Ensure 'interests' field is provided only for students
-        return this.role === 'student' || (this.role === 'teacher' && !value);
+        return this.role === 'student' || value.length === 0;
       },
       message: 'Interests field should only be set for students',
     },
@@ -145,7 +145,7 @@ const UserSchema = new mongoose.Schema({
     validate: {
       validator: function (value) {
         // Ensure 'education' field is provided only for teachers
-        return this.role === 'teacher' || (this.role === 'student' && !value);
+        return this.role === 'teacher' || value.length === 0;
       },
       message: 'Education field should only be set for teachers',
     },
