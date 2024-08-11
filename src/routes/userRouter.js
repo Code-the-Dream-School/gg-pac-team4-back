@@ -26,15 +26,9 @@ router.post('/forgot-password', forgotPassword);
 router.patch('/reset-password', resetPassword);
 
 // User routes
-// router.use(authenticationMiddleware); //all routes below will use authenticationMiddleware
 router.get('/users', authenticationMiddleware, getUsers);
 router.get('/users/:id', authenticationMiddleware, getUserById);
-router.patch(
-  '/users/:id',
-  authenticationMiddleware,
-  upload.single('profileImage'),
-  updateUser
-);
+router.patch('/users/:id', authenticationMiddleware, updateUser);
 router.delete('/users/:id', authenticationMiddleware, deleteUser);
 
 module.exports = router;

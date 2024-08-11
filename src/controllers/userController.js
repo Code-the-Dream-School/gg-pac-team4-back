@@ -4,7 +4,7 @@ const User = require('../models/User');
 const { StatusCodes } = require('http-status-codes');
 const paginateAndSort = require('../utils/paginationSorting');
 const { NotFoundError } = require('../errors');
-const UnauthenticatedError = require('../errors/unauthenticated');
+const ForbiddenError = require('../errors/forbidden');
 
 // Get all users with pagination
 const getUsers = async (req, res) => {
@@ -51,7 +51,7 @@ const updateUser = async (req, res) => {
       throw new NotFoundError('User does not exist');
     }
     if (!user._id.equals(req.user.userId)) {
-      throw new UnauthenticatedError(
+      throw new ForbiddenError(
         'You do not have permission to edit this user profile'
       );
     }
@@ -107,7 +107,7 @@ const deleteUser = async (req, res) => {
       throw new NotFoundError('User does not exist');
     }
     if (!user._id.equals(req.user.userId)) {
-      throw new UnauthenticatedError(
+      throw new ForbiddenError(
         'You do not have permission to delete this user profile'
       );
     }
