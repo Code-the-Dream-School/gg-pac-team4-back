@@ -12,8 +12,14 @@ const {
 
 const { registerStudent, registerTeacher, loginUser, logoutUser } =
   authController;
-const { getUsers, getUserById, updateUser, deleteUser, addProfileVideo } =
-  userController;
+const {
+  getUsers,
+  getUserById,
+  updateUser,
+  deleteUser,
+  addProfileVideo,
+  deleteProfileVideo,
+} = userController;
 const upload = require('../middleware/multerMiddleware');
 
 // Authentication routes
@@ -42,5 +48,6 @@ router.patch(
   addProfileVideo
 );
 router.delete('/users/:id', authenticationMiddleware, deleteUser);
+router.delete('/users/:id/video', authenticationMiddleware, deleteProfileVideo);
 
 module.exports = router;

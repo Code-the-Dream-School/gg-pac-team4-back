@@ -178,10 +178,52 @@ const addProfileVideo = async (req, res) => {
   }
 };
 
+// Delete profile video
+const deleteProfileVideo = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      throw new NotFoundError('User does not exist');
+    }
+    if (!user._id.equals(req.user.userId)) {
+      throw new ForbiddenError(
+        'You do not have permission to delete this profile video'
+      );
+    }
+
+    // Check if the user has a profile video and delete it
+    if (
+      user.profileVideoPublicId &&
+      user.profileVideoPublicId !== 'default_profile_video'
+    ) {
+      await cloudinary.uploader.destroy(user.profileVideoPublicId, {
+        resource_type: 'video',
+      });
+    }
+
+    // Set default video ID and URL
+    user.profileVideoUrl = '';
+    user.profileVideoPublicId = 'default_profile_video';
+
+    // Save the user with updated profile
+    await user.save({ runValidators: true });
+
+    res.status(StatusCodes.OK).json({
+      message: 'Profile video deleted and set to default successfully',
+    });
+  } catch (error) {
+    console.error('Error deleting profile video:', error);
+    res
+      .status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ error: error.message });
+  }
+};
+
 module.exports = {
   getUsers,
   getUserById,
   updateUser,
   deleteUser,
   addProfileVideo,
+  deleteProfileVideo,
 };
