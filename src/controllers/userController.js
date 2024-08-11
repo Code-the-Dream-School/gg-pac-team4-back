@@ -219,6 +219,53 @@ const deleteProfileVideo = async (req, res) => {
   }
 };
 
+const addProfilePortfolioImage = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      throw new NotFoundError('User does not exist');
+    }
+    if (!user._id.equals(req.user.userId)) {
+      throw new ForbiddenError(
+        'You do not have permission to add images to this user profile'
+      );
+    }
+    // Uploading new images to Cloudinary
+    const uploadPromises = req.files.map(async (file) => {
+      const filePath = file.path;
+      const profilePortfolioImageResponse = await cloudinary.uploader.upload(
+        filePath,
+        {
+          resource_type: 'image',
+        }
+      );
+      await fs.unlink(filePath);
+      return {
+        url: profilePortfolioImageResponse.secure_url,
+        publicId: profilePortfolioImageResponse.public_id,
+      };
+    });
+
+    const uploadedImages = await Promise.all(uploadPromises);
+
+    user.profilePortfolioImages = [
+      ...user.profilePortfolioImages,
+      ...uploadedImages,
+    ];
+    await user.save({ runValidators: true });
+
+    res
+      .status(StatusCodes.OK)
+      .json({ message: 'Profile images successfully uploaded' });
+  } catch (error) {
+    console.error('Error during image upload:', error);
+    res.status(500).json({
+      message: 'Failed to upload profile images',
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getUsers,
   getUserById,
@@ -226,4 +273,5 @@ module.exports = {
   deleteUser,
   addProfileVideo,
   deleteProfileVideo,
+  addProfilePortfolioImage,
 };

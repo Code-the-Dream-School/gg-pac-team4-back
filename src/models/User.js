@@ -164,6 +164,18 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: 'default_profile_video',
   },
+  profilePortfolioImages: [
+    {
+      url: {
+        type: String,
+        default: '',
+      },
+      publicId: {
+        type: String,
+        default: 'default_portfolio_image',
+      },
+    },
+  ],
 });
 
 // Before saving the users, hash the password
