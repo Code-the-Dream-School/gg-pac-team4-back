@@ -266,6 +266,52 @@ const addProfilePortfolioImage = async (req, res) => {
   }
 };
 
+const deleteProfilePortfolioImage = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      throw new NotFoundError('User does not exist');
+    }
+    if (!user._id.equals(req.user.userId)) {
+      throw new ForbiddenError(
+        'You do not have permission to delete portfolio image from this user profile'
+      );
+    }
+    const imageIndex = user.profilePortfolioImages.findIndex(
+      (image) => image.publicId === req.params.publicId
+    );
+    if (imageIndex === -1) {
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ message: 'Image not found' });
+    }
+
+    // Delete the image from Cloudinary
+    await cloudinary.uploader.destroy(
+      user.profilePortfolioImages[imageIndex].publicId,
+      {
+        resource_type: 'image',
+      }
+    );
+
+    // Remove the image from the user's portfolio
+    user.profilePortfolioImages.splice(imageIndex, 1);
+
+    // Save user to the database
+    await user.save({ runValidators: true });
+
+    res
+      .status(StatusCodes.OK)
+      .json({ message: 'Profile portfolio image deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting profile image:', error);
+    return res.status(500).json({
+      message: 'Failed to delete profile image',
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getUsers,
   getUserById,
@@ -274,4 +320,5 @@ module.exports = {
   addProfileVideo,
   deleteProfileVideo,
   addProfilePortfolioImage,
+  deleteProfilePortfolioImage,
 };
