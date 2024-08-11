@@ -156,6 +156,14 @@ const UserSchema = new mongoose.Schema({
     maxlength: [300, 'About cannot exceed 300 characters'],
     default: '',
   },
+  profileVideoUrl: {
+    type: String,
+    default: '',
+  },
+  profileVideoPublicId: {
+    type: String,
+    default: 'default_profile_video',
+  },
 });
 
 // Before saving the users, hash the password

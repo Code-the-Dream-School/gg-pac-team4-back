@@ -126,9 +126,62 @@ const deleteUser = async (req, res) => {
   }
 };
 
+//add video
+const addProfileVideo = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      throw new NotFoundError('User does not exist');
+    }
+    if (!user._id.equals(req.user.userId)) {
+      throw new ForbiddenError(
+        'You do not have permission to add a video to this user profile'
+      );
+    }
+    // Delete the old video from Cloudinary if it exists
+    if (
+      user.profileVideoPublicId &&
+      user.profileVideoPublicId !== 'default_profile_video'
+    ) {
+      await cloudinary.uploader.destroy(user.profileVideoPublicId, {
+        resource_type: 'video',
+      });
+    }
+
+    // Uploading new video to Cloudinary
+    const filePath = req.file.path;
+    const profileVideoResponse = await cloudinary.uploader.upload(filePath, {
+      resource_type: 'video',
+    });
+    await fs.unlink(filePath); // Cleaning up the temporary file
+
+    // Updating video fields
+    user.profileVideoUrl = profileVideoResponse.secure_url;
+    user.profileVideoPublicId = profileVideoResponse.public_id;
+
+    Object.keys(req.body).forEach((key) => {
+      user[key] = req.body[key];
+    });
+
+    // Save user to the database and return the updated user with hashed password
+    await user.save({ runValidators: true });
+
+    res
+      .status(StatusCodes.OK)
+      .json({ message: 'Profile video successfully updated' });
+  } catch (error) {
+    console.error('Error during video upload:', error);
+    return res.status(500).json({
+      message: 'Failed to upload profile video',
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getUsers,
   getUserById,
   updateUser,
   deleteUser,
+  addProfileVideo,
 };
