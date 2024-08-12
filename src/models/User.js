@@ -70,6 +70,46 @@ const UserSchema = new mongoose.Schema({
     type: String,
     validate: lettersOnlyValidator,
   },
+  aboutMe: {
+    type: String,
+    maxlength: 500,
+  },
+  educationAndExperience: {
+    type: String,
+    required: function () {
+      return this.role === 'teacher';
+    },
+  },
+  subjectArea: {
+    type: String,
+    enum: [
+      'Music',
+      'Arts',
+      'Dance',
+      'Photography',
+      'Film Production',
+      'Design',
+      'Acting Skills',
+      'Storytelling',
+      'Ceramics & Sculpture',
+      'Handicrafts',
+      '3D & Animation',
+      'Games & Hobbies',
+    ],
+  },
+  hourlyRate: {
+    type: Number,
+    required: function () {
+      return this.role === 'teacher';
+    },
+  },
+  availability: {
+    type: String,
+    required: function () {
+      return this.role === 'teacher'; //Teacher: Must provide the availability field.
+      //Student: Can provide the availability field, but it is not mandatory.
+    },
+  },
 });
 
 // Before saving the users, hash the password
