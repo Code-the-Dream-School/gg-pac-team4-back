@@ -219,6 +219,7 @@ const deleteProfileVideo = async (req, res) => {
   }
 };
 
+//add profile portfolio images
 const addProfilePortfolioImage = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -266,6 +267,7 @@ const addProfilePortfolioImage = async (req, res) => {
   }
 };
 
+//delete profile portfolio image
 const deleteProfilePortfolioImage = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -304,9 +306,104 @@ const deleteProfilePortfolioImage = async (req, res) => {
       .status(StatusCodes.OK)
       .json({ message: 'Profile portfolio image deleted successfully' });
   } catch (error) {
-    console.error('Error deleting profile image:', error);
+    console.error('Error deleting profile portfolio image:', error);
     return res.status(500).json({
-      message: 'Failed to delete profile image',
+      message: 'Failed to delete profile portfolio image',
+      error: error.message,
+    });
+  }
+};
+
+//add profile portfolio video
+const addProfilePortfolioVideo = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      throw new NotFoundError('User does not exist');
+    }
+    if (!user._id.equals(req.user.userId)) {
+      throw new ForbiddenError(
+        'You do not have permission to add video to this user profile'
+      );
+    }
+    // Uploading new video to Cloudinary
+    const uploadPromises = req.files.map(async (file) => {
+      const filePath = file.path;
+      const profilePortfolioVideoResponse = await cloudinary.uploader.upload(
+        filePath,
+        {
+          resource_type: 'video',
+        }
+      );
+      await fs.unlink(filePath);
+      return {
+        url: profilePortfolioVideoResponse.secure_url,
+        publicId: profilePortfolioVideoResponse.public_id,
+      };
+    });
+
+    const uploadedVideo = await Promise.all(uploadPromises);
+
+    user.profilePortfolioVideos = [
+      ...user.profilePortfolioVideos,
+      ...uploadedVideo,
+    ];
+    await user.save({ runValidators: true });
+
+    res
+      .status(StatusCodes.OK)
+      .json({ message: 'Profile video successfully uploaded' });
+  } catch (error) {
+    console.error('Error during video upload:', error);
+    res.status(500).json({
+      message: 'Failed to upload profile portfolio video',
+      error: error.message,
+    });
+  }
+};
+
+//delete profile portfolio video
+const deleteProfilePortfolioVideo = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      throw new NotFoundError('User does not exist');
+    }
+    if (!user._id.equals(req.user.userId)) {
+      throw new ForbiddenError(
+        'You do not have permission to delete portfolio video from this user profile'
+      );
+    }
+    const videoIndex = user.profilePortfolioVideos.findIndex(
+      (video) => video.publicId === req.params.publicId
+    );
+    if (videoIndex === -1) {
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ message: 'Video not found' });
+    }
+
+    // Delete the video from Cloudinary
+    await cloudinary.uploader.destroy(
+      user.profilePortfolioVideos[videoIndex].publicId,
+      {
+        resource_type: 'video',
+      }
+    );
+
+    // Remove the video from the user's portfolio
+    user.profilePortfolioVideos.splice(videoIndex, 1);
+
+    // Save user to the database
+    await user.save({ runValidators: true });
+
+    res
+      .status(StatusCodes.OK)
+      .json({ message: 'Profile portfolio video deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting profile portfolio video:', error);
+    return res.status(500).json({
+      message: 'Failed to delete profile portfolio video',
       error: error.message,
     });
   }
@@ -321,4 +418,6 @@ module.exports = {
   deleteProfileVideo,
   addProfilePortfolioImage,
   deleteProfilePortfolioImage,
+  addProfilePortfolioVideo,
+  deleteProfilePortfolioVideo,
 };
