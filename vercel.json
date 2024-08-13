@@ -1,18 +1,16 @@
 {
   "version": 2,
-  "name": "TalentStudio",
   "builds": [
     {
-      "src": "back/package.json",
+      "src": "src/server.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/back/$1"
+      "dest": "/src/server.js"
     }
   ],
-  "buildCommand": "cd back && npm install",
-  "startCommand": "npm run dev"
+  "buildCommand": "npm install"
 }

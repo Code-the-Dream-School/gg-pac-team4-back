@@ -18,3 +18,5 @@ node_modules/
 # other
 .DS_Store
 .vercel
+
+.vercel

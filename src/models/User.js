@@ -77,7 +77,9 @@ const UserSchema = new mongoose.Schema({
   educationAndExperience: {
     type: String,
     required: function () {
-      return this.role === 'teacher';
+      return (
+        this.role === 'teacher' && this.isModified('educationAndExperience')
+      );
     },
   },
   subjectArea: {
@@ -100,20 +102,18 @@ const UserSchema = new mongoose.Schema({
   hourlyRate: {
     type: Number,
     required: function () {
-      return this.role === 'teacher';
+      return this.role === 'teacher' && this.isModified('hourlyRate');
     },
   },
   availability: {
     type: String,
     required: function () {
-      return this.role === 'teacher'; //Teacher: Must provide the availability field.
-      //Student: Can provide the availability field, but it is not mandatory.
+      return this.role === 'teacher' && this.isModified('availability');
     },
   },
 });
 
 // Before saving the users, hash the password
-//pre('save') hook. The password hashing is consistently applied anytime a document is saved
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
 
@@ -145,4 +145,5 @@ UserSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   }
   return false; // False means NOT changed
 };
+
 module.exports = mongoose.model('User', UserSchema);
