@@ -34,6 +34,7 @@ app.use(favicon(__dirname + '/public/favicon.ico'));
 
 // routes
 app.get('/', (req, res) => {
+  //for deploy reasons
   res.redirect('/api/v1');
 });
 
