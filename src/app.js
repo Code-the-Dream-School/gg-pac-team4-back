@@ -33,6 +33,10 @@ app.use(express.static('public'));
 app.use(favicon(__dirname + '/public/favicon.ico'));
 
 // routes
+app.get('/', (req, res) => {
+  res.redirect('/api/v1');
+});
+
 app.use('/api/v1/classes', classesRouter);
 app.use('/api/v1', userRouter);
 
