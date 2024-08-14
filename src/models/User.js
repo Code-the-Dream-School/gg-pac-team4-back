@@ -84,78 +84,6 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: 'default_profile_image',
   },
-  specialty: {
-    type: [String],
-    enum: {
-      values: [
-        'Music',
-        'Arts',
-        'Dance',
-        'Photography',
-        'Film Production',
-        'Design',
-        'Acting Skills',
-        'Storytelling',
-        'Ceramics & Sculpture',
-        'Handicrafts',
-        '3D & Animation',
-        'Games & Hobbies',
-      ],
-    },
-    validate: {
-      validator: function (value) {
-        // Ensure 'specialty' field is provided only for teachers
-        return this.role === 'teacher' || value.length === 0;
-      },
-      message: 'Specialty field should only be set for teachers',
-    },
-    select: false,
-  },
-  interests: {
-    type: [String],
-    enum: {
-      values: [
-        'Music',
-        'Arts',
-        'Dance',
-        'Photography',
-        'Film Production',
-        'Design',
-        'Acting Skills',
-        'Storytelling',
-        'Ceramics & Sculpture',
-        'Handicrafts',
-        '3D & Animation',
-        'Games & Hobbies',
-      ],
-    },
-    validate: {
-      validator: function (value) {
-        // Ensure 'interests' field is provided only for students
-        return this.role === 'student' || value.length === 0;
-      },
-      message: 'Interests field should only be set for students',
-    },
-    select: false,
-  },
-  education: {
-    type: String,
-    maxlength: [200, 'Education cannot exceed 200 characters'],
-    default: '',
-    validate: {
-      validator: function (value) {
-        // Ensure 'education' field is provided only for teachers
-        return this.role === 'teacher' || value.length === 0;
-      },
-      message: 'Education field should only be set for teachers',
-    },
-    select: false,
-  },
-  aboutUser: {
-    type: String,
-    maxlength: [300, 'About cannot exceed 300 characters'],
-    default: '',
-  },
   profileVideoUrl: {
     type: String,
     default: '',
@@ -188,10 +116,50 @@ const UserSchema = new mongoose.Schema({
       },
     },
   ],
+  aboutMe: {
+    type: String,
+    maxlength: 500,
+  },
+  educationAndExperience: {
+    type: String,
+    required: function () {
+      return (
+        this.role === 'teacher' && this.isModified('educationAndExperience')
+      );
+    },
+  },
+  subjectArea: {
+    type: String,
+    enum: [
+      'Music',
+      'Arts',
+      'Dance',
+      'Photography',
+      'Film Production',
+      'Design',
+      'Acting Skills',
+      'Storytelling',
+      'Ceramics & Sculpture',
+      'Handicrafts',
+      '3D & Animation',
+      'Games & Hobbies',
+    ],
+  },
+  hourlyRate: {
+    type: Number,
+    required: function () {
+      return this.role === 'teacher' && this.isModified('hourlyRate');
+    },
+  },
+  availability: {
+    type: String,
+    required: function () {
+      return this.role === 'teacher' && this.isModified('availability');
+    },
+  },
 });
 
 // Before saving the users, hash the password
-//pre('save') hook. The password hashing is consistently applied anytime a document is saved
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
 

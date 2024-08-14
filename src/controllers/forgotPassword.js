@@ -19,7 +19,8 @@ const forgotPassword = async (req, res) => {
   user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
   await user.save();
 
-  const resetUrl = `http://localhost:8000/api/v1/reset-password/${resetToken}`;
+  // const resetUrl = `http://localhost:5173/api/v1/reset-password/${resetToken}`;
+  const resetUrl = `http://localhost:5173/reset-password?token=${resetToken}`; // Update URL
   const message = `
     <p>You are receiving this email because you (or someone else) have requested the reset of a password. Please click the link below to reset your password:</p>
     <a href="${resetUrl}">Reset Password</a>
