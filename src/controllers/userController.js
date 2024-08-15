@@ -138,6 +138,14 @@ const addProfileVideo = async (req, res) => {
         'You do not have permission to add a video to this user profile'
       );
     }
+
+    // Ensure a video file is provided
+    if (!req.file) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: 'No video file uploaded',
+      });
+    }
+
     // Delete the old video from Cloudinary if it exists
     if (
       user.profileVideoPublicId &&
@@ -231,6 +239,13 @@ const addProfilePortfolioImage = async (req, res) => {
         'You do not have permission to add images to this user profile'
       );
     }
+    // Check if there are any files to upload
+    if (!req.files || req.files.length === 0) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: 'No files uploaded',
+      });
+    }
+
     // Uploading new images to Cloudinary
     const uploadPromises = req.files.map(async (file) => {
       const filePath = file.path;
@@ -326,6 +341,14 @@ const addProfilePortfolioVideo = async (req, res) => {
         'You do not have permission to add video to this user profile'
       );
     }
+
+    // Check if there are any files to upload
+    if (!req.files || req.files.length === 0) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: 'No files uploaded',
+      });
+    }
+
     // Uploading new video to Cloudinary
     const uploadPromises = req.files.map(async (file) => {
       const filePath = file.path;
