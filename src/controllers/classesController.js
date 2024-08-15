@@ -394,6 +394,51 @@ const approveApplication = async (req, res) => {
   }
 };
 
+const rejectApplication = async (req, res) => {
+  const { classId, applicationId } = req.params;
+  const userId = req.user.userId;
+
+  try {
+    const applicationToReject = await Class.findById(classId);
+
+    if (!applicationToReject) {
+      throw new NotFoundError('Application does not exist');
+    }
+
+    if (
+      !applicationToReject.createdBy ||
+      applicationToReject.createdBy.toString() !== userId
+    ) {
+      throw new ForbiddenError(
+        'You do not have permission to reject this application.'
+      );
+    }
+
+    // Find the application to reject by ID
+    const application = applicationToReject.applications.id(applicationId);
+
+    if (!application) {
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ message: 'Application not found' });
+    }
+
+    // Remove the rejected application
+    applicationToReject.applications = applicationToReject.applications.filter(
+      (application) => application._id.toString() !== applicationId
+    );
+
+    await applicationToReject.save();
+
+    res.status(StatusCodes.OK).json({ message: 'Application rejected' });
+  } catch (error) {
+    console.error('Error rejecting application:', error);
+    const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+    const errorMessage = error.message || 'Internal server error';
+    res.status(statusCode).json({ message: errorMessage });
+  }
+};
+
 module.exports = {
   displaySearchClasses,
   createClass,
@@ -402,4 +447,5 @@ module.exports = {
   deleteClass,
   applyForClass,
   approveApplication,
+  rejectApplication,
 };
