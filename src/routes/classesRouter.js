@@ -14,6 +14,11 @@ router
     upload.single('classImage'),
     classesController.createClass
   )
+  .post(
+    '/:classId/apply',
+    authenticationMiddleware,
+    classesController.applyForClass
+  )
   .patch(
     '/:classId',
     authenticationMiddleware,

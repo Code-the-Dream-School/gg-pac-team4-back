@@ -110,6 +110,7 @@ const createClass = async (req, res) => {
       experience,
       other,
       availableTime,
+      lessonType,
     } = req.body;
 
     const existingClass = await Class.findOne({
@@ -157,6 +158,7 @@ const createClass = async (req, res) => {
       createdBy,
       classImageUrl,
       classImagePublicId,
+      lessonType,
     });
 
     await newClass.save();
@@ -209,12 +211,10 @@ const editClass = async (req, res) => {
         updateData.classImageUrl = classImageResponse.secure_url;
         updateData.classImagePublicId = classImageResponse.public_id;
       } catch (error) {
-        return res
-          .status(500)
-          .json({
-            message: 'Failed to upload class image',
-            error: error.message,
-          });
+        return res.status(500).json({
+          message: 'Failed to upload class image',
+          error: error.message,
+        });
       }
     }
 
@@ -273,10 +273,39 @@ const deleteClass = async (req, res) => {
   }
 };
 
+//apply for class
+
+const applyForClass = async (req, res) => {
+  const { classId } = req.params;
+  const userId = req.user.userId;
+  const role = req.user.role;
+  const { availableTimeId } = req.body;
+
+  if (role !== 'student') {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      message: 'To apply for this class, you need to login as a student.',
+    });
+  }
+
+  try {
+    const classToApply = await Class.findById(classId);
+
+    if (!classToApply) {
+      throw new NotFoundError('Class does not exist');
+    }
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: 'An error occurred while applying for the class.' });
+  }
+};
+
 module.exports = {
   displaySearchClasses,
   createClass,
   getClassDetails,
   editClass,
   deleteClass,
+  applyForClass,
 };

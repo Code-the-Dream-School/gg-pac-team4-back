@@ -50,6 +50,14 @@ const ClassSchema = new mongoose.Schema(
         message: 'Type must be either "online" or "offline"',
       },
     },
+    lessonType: {
+      type: String,
+      required: [true, 'Please specify the lesson type'],
+      enum: {
+        values: ['Group', '1:1'],
+        message: 'Lesson type must be either "Group" or "1:1"',
+      },
+    },
     goal: {
       type: String,
       maxlength: [200, 'Goal cannot exceed 200 characters'],
@@ -69,9 +77,11 @@ const ClassSchema = new mongoose.Schema(
       {
         date: {
           type: Date,
+          required: [true, 'Please provide the date'],
         },
         startTime: {
           type: String,
+          required: [true, 'Please provide the start time'],
           default: '',
         },
       },
@@ -93,6 +103,30 @@ const ClassSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    applications: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+        },
+        appliedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+    participants: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+        },
+        appliedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
     category: {
       type: String,
       required: [true, 'Please provide the category of the class'],
