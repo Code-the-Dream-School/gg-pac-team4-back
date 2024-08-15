@@ -293,6 +293,55 @@ const applyForClass = async (req, res) => {
     if (!classToApply) {
       throw new NotFoundError('Class does not exist');
     }
+
+    const hasApplied = classToApply.applications.some(
+      (applications) => applications.userId.toString() === userId.toString()
+    );
+
+    if (hasApplied) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ message: 'You have already applied for this class.' });
+    }
+
+    const availableTimeSlot = classToApply.availableTime.id(availableTimeId);
+
+    if (!availableTimeSlot) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ message: 'Invalid time slot ID.' });
+    }
+
+    // Check lesson type and handle applications accordingly
+    if (classToApply.lessonType === '1:1') {
+      // Check if there is already an application (if you are enforcing only one student per class)
+      if (classToApply.applications.length > 0) {
+        return res
+          .status(StatusCodes.BAD_REQUEST)
+          .json({ message: 'This class is already booked.' });
+      }
+
+      classToApply.applications.push({ userId });
+      // Remove the applied time slot from availableTime
+      await Class.findByIdAndUpdate(
+        classId,
+        { $pull: { availableTime: { _id: availableTimeId } } },
+        { new: true }
+      );
+      await classToApply.save();
+      return res.status(StatusCodes.OK).json({
+        message: 'You have successfully applied for the one-on-one class.',
+      });
+    } else if (classToApply.lessonType === 'Group') {
+      // Add application for group lesson
+      classToApply.applications.push({ userId });
+      await classToApply.save();
+      return res.status(StatusCodes.OK).json({
+        message: 'You have successfully applied for the group class.',
+      });
+    } else {
+      throw new BadRequestError('Invalid class type');
+    }
   } catch (error) {
     console.error(error);
     return res
