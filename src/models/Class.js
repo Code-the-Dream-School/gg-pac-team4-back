@@ -115,7 +115,7 @@ const ClassSchema = new mongoose.Schema(
         },
       },
     ],
-    participants: [
+    classStudents: [
       {
         userId: {
           type: mongoose.Schema.Types.ObjectId,

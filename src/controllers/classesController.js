@@ -350,6 +350,33 @@ const applyForClass = async (req, res) => {
   }
 };
 
+const approveApplication = async (req, res) => {
+  const { classId } = req.params;
+  const userId = req.user.userId;
+
+  try {
+    const applicationToApprove = await Class.findById(classId);
+
+    if (!applicationToApprove) {
+      throw new NotFoundError('Application does not exist');
+    }
+
+    if (
+      !applicationToApprove.createdBy ||
+      applicationToApprove.createdBy.toString() !== userId
+    ) {
+      throw new ForbiddenError(
+        'You do not have permission to approve this application.'
+      );
+    }
+  } catch (error) {
+    console.error('Error deleting class:', error);
+    const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+    const errorMessage = error.message || 'Internal server error';
+    res.status(statusCode).json({ message: errorMessage });
+  }
+};
+
 module.exports = {
   displaySearchClasses,
   createClass,
@@ -357,4 +384,5 @@ module.exports = {
   editClass,
   deleteClass,
   applyForClass,
+  approveApplication,
 };

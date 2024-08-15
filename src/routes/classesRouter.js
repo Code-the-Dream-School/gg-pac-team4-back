@@ -19,6 +19,11 @@ router
     authenticationMiddleware,
     classesController.applyForClass
   )
+  .post(
+    '/:classId/approve/:applicationId',
+    authenticationMiddleware,
+    classesController.approveApplication
+  )
   .patch(
     '/:classId',
     authenticationMiddleware,
