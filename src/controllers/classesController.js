@@ -67,24 +67,7 @@ const getClassDetails = async (req, res) => {
       throw new NotFoundError('Class does not exist');
     }
 
-    const response = {
-      category: classDetail.category,
-      classTitle: classDetail.classTitle,
-      description: classDetail.description,
-      price: classDetail.price,
-      duration: classDetail.duration,
-      ages: classDetail.ages,
-      type: classDetail.type,
-      goal: classDetail.goal,
-      experience: classDetail.experience,
-      other: classDetail.other,
-      availableTime: classDetail.availableTime,
-      createdBy: classDetail.createdBy,
-      likes: classDetail.likes,
-      classImageUrl: classDetail.classImageUrl,
-    };
-
-    res.status(StatusCodes.OK).json({ class: response });
+    res.status(StatusCodes.OK).json({ class: classDetail });
   } catch (error) {
     console.error('Error retrieving class details:', error);
     res
@@ -351,7 +334,7 @@ const applyForClass = async (req, res) => {
 };
 
 const approveApplication = async (req, res) => {
-  const { classId } = req.params;
+  const { classId, applicationId } = req.params;
   const userId = req.user.userId;
 
   try {
@@ -369,8 +352,42 @@ const approveApplication = async (req, res) => {
         'You do not have permission to approve this application.'
       );
     }
+
+    // Find the application entry by ID
+    const application = applicationToApprove.applications.id(applicationId);
+
+    if (!application) {
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ message: 'Application not found' });
+    }
+
+    // Check if the user has already been approved
+    const alreadyApproved = applicationToApprove.classStudents.some(
+      (student) => student.userId.toString() === application.userId.toString()
+    );
+    if (alreadyApproved) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ message: 'Already approved' });
+    }
+
+    // Move the application to classStudents and remove it from applications
+    applicationToApprove.classStudents.push({
+      userId: application.userId,
+      appliedAt: application.appliedAt,
+    });
+
+    // Remove the application from the applications array
+    applicationToApprove.applications =
+      applicationToApprove.applications.filter(
+        (app) => app._id.toString() !== applicationId
+      );
+    await applicationToApprove.save();
+
+    res.status(StatusCodes.OK).json({ message: 'Applicant approved' });
   } catch (error) {
-    console.error('Error deleting class:', error);
+    console.error('Error approving application:', error);
     const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
     const errorMessage = error.message || 'Internal server error';
     res.status(statusCode).json({ message: errorMessage });
