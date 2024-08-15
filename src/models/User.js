@@ -5,6 +5,7 @@ const {
   adultNameFirstAndLast,
 } = require('../utils/adultValidation');
 const { lettersOnlyValidator } = require('../utils/letterValidation.js');
+const { validateURL } = require('../utils/urlValidation.js');
 
 // Define the Users schema
 const UserSchema = new mongoose.Schema({
@@ -70,10 +71,95 @@ const UserSchema = new mongoose.Schema({
     type: String,
     validate: lettersOnlyValidator,
   },
+  profileImageUrl: {
+    type: String,
+    default:
+      'https://res.cloudinary.com/dn1ewxfy7/image/upload/v1722717323/55055_eqqnfd.jpg',
+    validate: {
+      validator: validateURL,
+      message: 'Invalid URL format',
+    },
+  },
+  profileImagePublicId: {
+    type: String,
+    default: 'default_profile_image',
+  },
+  profileVideoUrl: {
+    type: String,
+    default: '',
+  },
+  profileVideoPublicId: {
+    type: String,
+    default: 'default_profile_video',
+  },
+  profilePortfolioImages: [
+    {
+      url: {
+        type: String,
+        default: '',
+      },
+      publicId: {
+        type: String,
+        default: 'default_portfolio_image',
+      },
+    },
+  ],
+  profilePortfolioVideos: [
+    {
+      url: {
+        type: String,
+        default: '',
+      },
+      publicId: {
+        type: String,
+        default: 'default_portfolio_video',
+      },
+    },
+  ],
+  aboutMe: {
+    type: String,
+    maxlength: 500,
+  },
+  educationAndExperience: {
+    type: String,
+    required: function () {
+      return (
+        this.role === 'teacher' && this.isModified('educationAndExperience')
+      );
+    },
+  },
+  subjectArea: {
+    type: String,
+    enum: [
+      'Music',
+      'Arts',
+      'Dance',
+      'Photography',
+      'Film Production',
+      'Design',
+      'Acting Skills',
+      'Storytelling',
+      'Ceramics & Sculpture',
+      'Handicrafts',
+      '3D & Animation',
+      'Games & Hobbies',
+    ],
+  },
+  hourlyRate: {
+    type: Number,
+    required: function () {
+      return this.role === 'teacher' && this.isModified('hourlyRate');
+    },
+  },
+  availability: {
+    type: String,
+    required: function () {
+      return this.role === 'teacher' && this.isModified('availability');
+    },
+  },
 });
 
 // Before saving the users, hash the password
-//pre('save') hook. The password hashing is consistently applied anytime a document is saved
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
 
@@ -105,4 +191,5 @@ UserSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   }
   return false; // False means NOT changed
 };
+
 module.exports = mongoose.model('User', UserSchema);

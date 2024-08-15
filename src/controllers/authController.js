@@ -84,14 +84,14 @@ const loginUser = async (req, res) => {
       throw new UnauthenticatedError('Invalid credentials');
     }
     const token = generateToken(user._id);
+
+    const userObj = user.toObject();
+    delete userObj.password;
+
     res.status(StatusCodes.OK).json({
       message: 'Login successful',
       user: {
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        _id: user._id,
-        role: user.role,
+        ...userObj,
         token,
       },
     });
