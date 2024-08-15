@@ -1,6 +1,7 @@
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs').promises;
 const Class = require('../models/Class');
+const User = require('../models/User');
 const { StatusCodes } = require('http-status-codes');
 const {
   BadRequestError,
@@ -144,7 +145,16 @@ const createClass = async (req, res) => {
       lessonType,
     });
 
-    await newClass.save();
+    // Save the new class and get the savedClass object
+    const savedClass = await newClass.save();
+
+    // Update user's myClasses with the new class ID
+    await User.findByIdAndUpdate(
+      createdBy,
+      { $push: { myClasses: savedClass._id } },
+      { new: true } // Return the updated document
+    );
+
     res
       .status(StatusCodes.CREATED)
       .json({ message: 'Class created successfully' });

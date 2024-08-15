@@ -157,6 +157,12 @@ const UserSchema = new mongoose.Schema({
       return this.role === 'teacher' && this.isModified('availability');
     },
   },
+  myClasses: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Class',
+    },
+  ],
 });
 
 // Before saving the users, hash the password
