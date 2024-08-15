@@ -12,7 +12,19 @@ const {
 
 const { registerStudent, registerTeacher, loginUser, logoutUser } =
   authController;
-const { getUsers, getUserById, updateUser, deleteUser } = userController;
+const {
+  getUsers,
+  getUserById,
+  updateUser,
+  deleteUser,
+  addProfileVideo,
+  deleteProfileVideo,
+  addProfilePortfolioImage,
+  deleteProfilePortfolioImage,
+  addProfilePortfolioVideo,
+  deleteProfilePortfolioVideo,
+} = userController;
+const upload = require('../middleware/multerMiddleware');
 
 // Authentication routes
 router.post('/register/student', validateStudent, registerStudent);
@@ -27,7 +39,41 @@ router.patch('/reset-password', resetPassword);
 // User routes
 router.get('/users', authenticationMiddleware, getUsers);
 router.get('/users/:id', authenticationMiddleware, getUserById);
-router.patch('/users/:id', authenticationMiddleware, updateUser);
+router.patch(
+  '/users/:id',
+  authenticationMiddleware,
+  upload.single('profileImage'),
+  updateUser
+);
+router.patch(
+  '/users/:id/video',
+  authenticationMiddleware,
+  upload.single('profileVideo'),
+  addProfileVideo
+);
+router.patch(
+  '/users/:id/portfolioImages',
+  authenticationMiddleware,
+  upload.array('profilePortfolioImage'),
+  addProfilePortfolioImage
+);
+router.patch(
+  '/users/:id/portfolioVideos',
+  authenticationMiddleware,
+  upload.array('profilePortfolioVideos'),
+  addProfilePortfolioVideo
+);
 router.delete('/users/:id', authenticationMiddleware, deleteUser);
+router.delete('/users/:id/video', authenticationMiddleware, deleteProfileVideo);
+router.delete(
+  '/users/:id/portfolioImages/:publicId',
+  authenticationMiddleware,
+  deleteProfilePortfolioImage
+);
+router.delete(
+  '/users/:id/portfolioVideos/:publicId',
+  authenticationMiddleware,
+  deleteProfilePortfolioVideo
+);
 
 module.exports = router;

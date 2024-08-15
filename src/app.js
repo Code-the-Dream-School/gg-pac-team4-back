@@ -39,7 +39,6 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/v1/classes', classesRouter);
-app.use('/api/v1', userRouter);
 
 // Error handling middleware
 app.use(notFound);
