@@ -39,6 +39,7 @@ const UserSchema = new mongoose.Schema({
   },
   phoneNumber: {
     type: String,
+    default: '',
     match: [
       /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/,
       'Please provide a valid phone number',
@@ -66,10 +67,6 @@ const UserSchema = new mongoose.Schema({
     type: String,
     enum: ['student', 'teacher'],
     required: true,
-  },
-  subject: {
-    type: String,
-    validate: lettersOnlyValidator,
   },
   profileImageUrl: {
     type: String,
@@ -119,9 +116,11 @@ const UserSchema = new mongoose.Schema({
   aboutMe: {
     type: String,
     maxlength: 500,
+    default: '',
   },
   educationAndExperience: {
     type: String,
+    default: '',
     required: function () {
       return (
         this.role === 'teacher' && this.isModified('educationAndExperience')
@@ -144,6 +143,7 @@ const UserSchema = new mongoose.Schema({
       '3D & Animation',
       'Games & Hobbies',
     ],
+    default: '',
   },
   hourlyRate: {
     type: Number,
