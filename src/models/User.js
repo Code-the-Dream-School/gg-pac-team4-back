@@ -115,7 +115,7 @@ const UserSchema = new mongoose.Schema({
   ],
   aboutMe: {
     type: String,
-    maxlength: 500,
+    maxlength: 1000,
     default: '',
   },
   education: {
@@ -193,6 +193,7 @@ UserSchema.virtual('filteredUser').get(function () {
 
   if (user.role !== 'student') {
     delete user.myTeachers;
+    delete user.dateOfBirth;
   }
 
   // Remove sensitive information
@@ -222,6 +223,7 @@ UserSchema.pre('save', async function (next) {
     }
     if (this.role !== 'student') {
       this.myTeachers = undefined;
+      this.dateOfBirth = undefined;
     }
   }
   next();

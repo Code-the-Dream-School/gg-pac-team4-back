@@ -81,13 +81,48 @@ const updateUser = async (req, res) => {
         });
       }
     }
+    // Define allowed fields based on role
+    const allowedFields = {
+      student: [
+        'firstName',
+        'lastName',
+        'phoneNumber',
+        'email',
+        'aboutMe',
+        'dateOfBirth',
+        'adultName',
+        'profileImage',
+        'subjectArea',
+      ],
+      teacher: [
+        'firstName',
+        'lastName',
+        'phoneNumber',
+        'email',
+        'aboutMe',
+        'education',
+        'experience',
+        'subjectArea',
+        'hourlyRate',
+        'availability',
+        'profileImage',
+      ],
+    };
 
-    // Update user fields manually
+    const roleFields = allowedFields[user.role] || [];
+
+    // Filter req.body to include only allowed fields
+    const updateData = {};
     Object.keys(req.body).forEach((key) => {
-      user[key] = req.body[key];
+      if (roleFields.includes(key)) {
+        updateData[key] = req.body[key];
+      }
     });
 
-    // Save user to the database and return the updated user with hashed password
+    // Update the user with filtered data
+    Object.assign(user, updateData);
+
+    // Save user to the database and return the updated user
     await user.save({ runValidators: true });
 
     res.status(StatusCodes.OK).json({ message: 'User successfully updated' });
