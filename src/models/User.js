@@ -183,7 +183,6 @@ UserSchema.virtual('filteredUser').get(function () {
   if (user.role !== 'teacher') {
     delete user.education;
     delete user.experience;
-    delete user.myClasses;
     delete user.profilePortfolioVideos;
     delete user.profilePortfolioImages;
     delete user.profileVideoUrl;
