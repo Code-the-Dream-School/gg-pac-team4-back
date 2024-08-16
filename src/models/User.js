@@ -41,7 +41,7 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: '',
     match: [
-      /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/,
+      /^(?:\+?\d{1,3}[-.\s]?)?(?:\(?\d{1,4}\)?[-.\s]?)?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$/,
       'Please provide a valid phone number',
     ],
   },
@@ -118,17 +118,16 @@ const UserSchema = new mongoose.Schema({
     maxlength: 500,
     default: '',
   },
-  educationAndExperience: {
+  education: {
     type: String,
     default: '',
-    required: function () {
-      return (
-        this.role === 'teacher' && this.isModified('educationAndExperience')
-      );
-    },
+  },
+  experience: {
+    type: String,
+    default: '',
   },
   subjectArea: {
-    type: String,
+    type: [String],
     enum: [
       'Music',
       'Arts',
@@ -143,7 +142,7 @@ const UserSchema = new mongoose.Schema({
       '3D & Animation',
       'Games & Hobbies',
     ],
-    default: '',
+    default: [],
   },
   hourlyRate: {
     type: Number,
@@ -163,6 +162,42 @@ const UserSchema = new mongoose.Schema({
       ref: 'Class',
     },
   ],
+});
+
+// Before saving, check the role and remove the field if it should not be set
+UserSchema.pre('save', function (next) {
+  if (this.isNew || this.isModified()) {
+    if (this.role !== 'teacher') {
+      this.education = undefined;
+      this.experience = undefined;
+      this.myClasses = undefined;
+      this.profilePortfolioVideos = undefined;
+      this.profilePortfolioImages = undefined;
+      this.profileVideoUrl = undefined;
+      this.profileVideoPublicId = undefined;
+    }
+  }
+  next();
+});
+
+UserSchema.virtual('filteredUser').get(function () {
+  const user = this.toObject();
+
+  // Remove fields for non-teachers
+  if (user.role !== 'teacher') {
+    delete user.education;
+    delete user.experience;
+    delete user.myClasses;
+    delete user.profilePortfolioVideos;
+    delete user.profilePortfolioImages;
+    delete user.profileVideoUrl;
+    delete user.profileVideoPublicId;
+  }
+
+  // Remove sensitive information
+  delete user.password;
+
+  return user;
 });
 
 // Before saving the users, hash the password
