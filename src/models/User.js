@@ -162,6 +162,18 @@ const UserSchema = new mongoose.Schema({
       ref: 'Class',
     },
   ],
+  myStudents: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+  ],
+  myTeachers: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+  ],
 });
 
 // Before saving, check the role and remove the field if it should not be set
@@ -175,6 +187,10 @@ UserSchema.pre('save', function (next) {
       this.profilePortfolioImages = undefined;
       this.profileVideoUrl = undefined;
       this.profileVideoPublicId = undefined;
+      this.myStudents = undefined;
+    }
+    if (this.role !== 'student') {
+      this.myTeachers = undefined;
     }
   }
   next();
@@ -192,6 +208,11 @@ UserSchema.virtual('filteredUser').get(function () {
     delete user.profilePortfolioImages;
     delete user.profileVideoUrl;
     delete user.profileVideoPublicId;
+    delete user.myStudents;
+  }
+
+  if (user.role !== 'student') {
+    delete user.myTeachers;
   }
 
   // Remove sensitive information
