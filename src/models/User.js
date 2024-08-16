@@ -176,26 +176,6 @@ const UserSchema = new mongoose.Schema({
   ],
 });
 
-// Before saving, check the role and remove the field if it should not be set
-UserSchema.pre('save', function (next) {
-  if (this.isNew || this.isModified()) {
-    if (this.role !== 'teacher') {
-      this.education = undefined;
-      this.experience = undefined;
-      this.myClasses = undefined;
-      this.profilePortfolioVideos = undefined;
-      this.profilePortfolioImages = undefined;
-      this.profileVideoUrl = undefined;
-      this.profileVideoPublicId = undefined;
-      this.myStudents = undefined;
-    }
-    if (this.role !== 'student') {
-      this.myTeachers = undefined;
-    }
-  }
-  next();
-});
-
 UserSchema.virtual('filteredUser').get(function () {
   const user = this.toObject();
 
@@ -221,13 +201,29 @@ UserSchema.virtual('filteredUser').get(function () {
   return user;
 });
 
-// Before saving the users, hash the password
+// Before saving the users, hash the password, check the role and remove the field if it should not be set
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
 
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   this.passwordChangedAt = Date.now() - 1000; // Password changed 1 second ago
+
+  if (this.isNew || this.isModified()) {
+    if (this.role !== 'teacher') {
+      this.education = undefined;
+      this.experience = undefined;
+      this.myClasses = undefined;
+      this.profilePortfolioVideos = undefined;
+      this.profilePortfolioImages = undefined;
+      this.profileVideoUrl = undefined;
+      this.profileVideoPublicId = undefined;
+      this.myStudents = undefined;
+    }
+    if (this.role !== 'student') {
+      this.myTeachers = undefined;
+    }
+  }
   next();
 });
 
