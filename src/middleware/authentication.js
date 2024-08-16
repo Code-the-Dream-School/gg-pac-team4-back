@@ -22,14 +22,12 @@ const authenticationMiddleware = async (req, res, next) => {
     }
 
     if (currentUser.changedPasswordAfter(payload.iat)) {
-      return res
-        .status(StatusCodes.UNAUTHORIZED)
-        .json({
-          message: 'User recently changed password! Please log in again.',
-        });
+      return res.status(StatusCodes.UNAUTHORIZED).json({
+        message: 'User recently changed password! Please log in again.',
+      });
     }
 
-    req.user = { userId: payload.userId };
+    req.user = { userId: payload.userId, role: currentUser.role };
     next();
   } catch (error) {
     return res

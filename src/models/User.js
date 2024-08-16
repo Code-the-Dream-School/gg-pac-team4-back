@@ -39,8 +39,9 @@ const UserSchema = new mongoose.Schema({
   },
   phoneNumber: {
     type: String,
+    default: '',
     match: [
-      /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/,
+      /^(?:\+?\d{1,3}[-.\s]?)?(?:\(?\d{1,4}\)?[-.\s]?)?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$/,
       'Please provide a valid phone number',
     ],
   },
@@ -66,10 +67,6 @@ const UserSchema = new mongoose.Schema({
     type: String,
     enum: ['student', 'teacher'],
     required: true,
-  },
-  subject: {
-    type: String,
-    validate: lettersOnlyValidator,
   },
   profileImageUrl: {
     type: String,
@@ -119,17 +116,18 @@ const UserSchema = new mongoose.Schema({
   aboutMe: {
     type: String,
     maxlength: 500,
+    default: '',
   },
-  educationAndExperience: {
+  education: {
     type: String,
-    required: function () {
-      return (
-        this.role === 'teacher' && this.isModified('educationAndExperience')
-      );
-    },
+    default: '',
+  },
+  experience: {
+    type: String,
+    default: '',
   },
   subjectArea: {
-    type: String,
+    type: [String],
     enum: [
       'Music',
       'Arts',
@@ -144,6 +142,7 @@ const UserSchema = new mongoose.Schema({
       '3D & Animation',
       'Games & Hobbies',
     ],
+    default: [],
   },
   hourlyRate: {
     type: Number,
@@ -157,6 +156,69 @@ const UserSchema = new mongoose.Schema({
       return this.role === 'teacher' && this.isModified('availability');
     },
   },
+  myClasses: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Class',
+    },
+  ],
+  myStudents: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+  ],
+  myTeachers: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+  ],
+});
+
+// Before saving, check the role and remove the field if it should not be set
+UserSchema.pre('save', function (next) {
+  if (this.isNew || this.isModified()) {
+    if (this.role !== 'teacher') {
+      this.education = undefined;
+      this.experience = undefined;
+      this.myClasses = undefined;
+      this.profilePortfolioVideos = undefined;
+      this.profilePortfolioImages = undefined;
+      this.profileVideoUrl = undefined;
+      this.profileVideoPublicId = undefined;
+      this.myStudents = undefined;
+    }
+    if (this.role !== 'student') {
+      this.myTeachers = undefined;
+    }
+  }
+  next();
+});
+
+UserSchema.virtual('filteredUser').get(function () {
+  const user = this.toObject();
+
+  // Remove fields for non-teachers
+  if (user.role !== 'teacher') {
+    delete user.education;
+    delete user.experience;
+    delete user.myClasses;
+    delete user.profilePortfolioVideos;
+    delete user.profilePortfolioImages;
+    delete user.profileVideoUrl;
+    delete user.profileVideoPublicId;
+    delete user.myStudents;
+  }
+
+  if (user.role !== 'student') {
+    delete user.myTeachers;
+  }
+
+  // Remove sensitive information
+  delete user.password;
+
+  return user;
 });
 
 // Before saving the users, hash the password
