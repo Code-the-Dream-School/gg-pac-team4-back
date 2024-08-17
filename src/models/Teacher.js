@@ -46,12 +46,14 @@ const TeacherSchema = new mongoose.Schema({
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Student',
+      default: [],
     },
   ],
   myClasses: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Class',
+      default: [],
     },
   ],
   mySchedule: [
@@ -59,10 +61,12 @@ const TeacherSchema = new mongoose.Schema({
       day: {
         type: String,
         required: true,
+        default: '',
       },
       time: {
         type: String,
         required: true,
+        default: '',
       },
     },
   ],
