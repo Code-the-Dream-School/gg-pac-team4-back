@@ -1,5 +1,10 @@
 const mongoose = require('mongoose');
 const User = require('./User');
+const {
+  adultValidator,
+  adultNameFirstAndLast,
+} = require('../utils/adultValidation');
+const { lettersOnlyValidator } = require('../utils/letterValidation.js');
 
 const StudentSchema = new mongoose.Schema({
   adultName: {
