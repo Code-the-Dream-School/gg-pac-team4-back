@@ -61,6 +61,39 @@ const UserSchema = new mongoose.Schema(
       maxlength: [500, 'About me must be at most 500 characters'],
       default: '',
     },
+    notifications: [
+      {
+        message: {
+          type: String,
+          required: true,
+        },
+        date: {
+          type: Date,
+          default: Date.now,
+        },
+        read: {
+          type: Boolean,
+          default: false,
+        },
+      },
+    ],
+    messages: [
+      {
+        sender: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+          required: true,
+        },
+        content: {
+          type: String,
+          required: true,
+        },
+        date: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
     subjectArea: {
       type: [String],
       enum: [

@@ -54,6 +54,18 @@ const TeacherSchema = new mongoose.Schema({
       ref: 'Class',
     },
   ],
+  mySchedule: [
+    {
+      day: {
+        type: String,
+        required: true,
+      },
+      time: {
+        type: String,
+        required: true,
+      },
+    },
+  ],
 });
 
 module.exports = User.discriminator('Teacher', TeacherSchema);
