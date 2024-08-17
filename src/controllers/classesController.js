@@ -209,12 +209,10 @@ const editClass = async (req, res) => {
         updateData.classImageUrl = classImageResponse.secure_url;
         updateData.classImagePublicId = classImageResponse.public_id;
       } catch (error) {
-        return res
-          .status(500)
-          .json({
-            message: 'Failed to upload class image',
-            error: error.message,
-          });
+        return res.status(500).json({
+          message: 'Failed to upload class image',
+          error: error.message,
+        });
       }
     }
 
