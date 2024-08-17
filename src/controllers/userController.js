@@ -34,7 +34,7 @@ const getUsers = async (req, res) => {
 const getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.params.id).populate(
-      'myTeachers myStudents'
+      'myTeachers myStudents myClasses myLessons mySchedule'
     );
     if (!user) {
       throw new NotFoundError('User not found');
@@ -72,6 +72,8 @@ const getUserProfile = async (req, res) => {
         education = '',
         experience = '',
         myStudents = [],
+        myClasses = [],
+        mySchedule = [],
       } = user;
 
       Object.assign(userProfile, {
@@ -82,6 +84,8 @@ const getUserProfile = async (req, res) => {
         education,
         experience,
         myStudents,
+        myClasses,
+        mySchedule,
       });
     }
 
@@ -93,6 +97,7 @@ const getUserProfile = async (req, res) => {
         dateOfBirth = '',
         myClasses = [],
         myTeachers = [],
+        myLessons = [],
       } = user;
 
       Object.assign(userProfile, {
@@ -101,6 +106,7 @@ const getUserProfile = async (req, res) => {
         dateOfBirth,
         myClasses,
         myTeachers,
+        myLessons,
       });
     }
 
