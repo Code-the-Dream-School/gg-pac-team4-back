@@ -23,6 +23,7 @@ const {
   deleteProfilePortfolioImage,
   addProfilePortfolioVideo,
   deleteProfilePortfolioVideo,
+  getUserProfile,
 } = userController;
 const upload = require('../middleware/multerMiddleware');
 
@@ -39,6 +40,7 @@ router.patch('/reset-password', resetPassword);
 // User routes
 router.get('/users', authenticationMiddleware, getUsers);
 router.get('/users/:id', authenticationMiddleware, getUserById);
+router.get('/profile/:id', authenticationMiddleware, getUserProfile);
 router.patch(
   '/users/:id',
   authenticationMiddleware,

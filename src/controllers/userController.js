@@ -1,6 +1,8 @@
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs').promises;
 const User = require('../models/User');
+const Teacher = require('../models/Teacher');
+const Student = require('../models/Student');
 const { StatusCodes } = require('http-status-codes');
 const paginateAndSort = require('../utils/paginationSorting');
 const { NotFoundError } = require('../errors');
@@ -25,6 +27,91 @@ const getUsers = async (req, res) => {
     res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .json({ message: 'Internal server error' });
+  }
+};
+
+// Get user profile with default values
+const getUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).populate(
+      'myTeachers myStudents'
+    );
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    // Destructure user fields
+    const {
+      _id,
+      firstName = '',
+      lastName = '',
+      email = '',
+      profileImageUrl = 'https://res.cloudinary.com/dn1ewxfy7/image/upload/v1722717323/55055_eqqnfd.jpg',
+      aboutMe = '',
+      subjectArea = [],
+    } = user;
+
+    // Initialize userProfile with common fields
+    const userProfile = {
+      id: _id,
+      firstName,
+      lastName,
+      email,
+      profileImageUrl,
+      aboutMe,
+      subjectArea,
+    };
+
+    // Additional fields for teachers
+    if (user.role === 'teacher') {
+      const {
+        profileVideoUrl = '',
+        profileVideoPublicId = 'default_profile_video',
+        profilePortfolioImages = [],
+        profilePortfolioVideos = [],
+        education = '',
+        experience = '',
+        myStudents = [],
+      } = user;
+
+      Object.assign(userProfile, {
+        profileVideoUrl,
+        profileVideoPublicId,
+        profilePortfolioImages,
+        profilePortfolioVideos,
+        education,
+        experience,
+        myStudents,
+      });
+    }
+
+    // Additional fields for students
+    if (user.role === 'student') {
+      const {
+        adultName = '',
+        phoneNumber = '',
+        dateOfBirth = '',
+        myClasses = [],
+        myTeachers = [],
+      } = user;
+
+      Object.assign(userProfile, {
+        adultName,
+        phoneNumber,
+        dateOfBirth,
+        myClasses,
+        myTeachers,
+      });
+    }
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: userProfile,
+    });
+  } catch (error) {
+    res
+      .status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ success: false, error: error.message });
   }
 };
 
@@ -443,4 +530,5 @@ module.exports = {
   deleteProfilePortfolioImage,
   addProfilePortfolioVideo,
   deleteProfilePortfolioVideo,
+  getUserProfile,
 };
