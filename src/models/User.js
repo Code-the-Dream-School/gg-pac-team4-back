@@ -122,22 +122,6 @@ UserSchema.pre('save', async function (next) {
   this.password = await bcrypt.hash(this.password, salt);
   this.passwordChangedAt = Date.now() - 1000; // Password changed 1 second ago
 
-  if (this.isNew || this.isModified()) {
-    if (this.role !== 'teacher') {
-      this.education = undefined;
-      this.experience = undefined;
-      this.myClasses = undefined;
-      this.profilePortfolioVideos = undefined;
-      this.profilePortfolioImages = undefined;
-      this.profileVideoUrl = undefined;
-      this.profileVideoPublicId = undefined;
-      this.myStudents = undefined;
-    }
-    if (this.role !== 'student') {
-      this.myTeachers = undefined;
-      this.dateOfBirth = undefined;
-    }
-  }
   next();
 });
 

@@ -398,6 +398,19 @@ const approveApplication = async (req, res) => {
 
     await applicationToApprove.save();
 
+    // Update the teacher's myStudents array
+    const teacher = await User.findById(userId);
+    if (!teacher) {
+      throw new NotFoundError('Teacher not found');
+    }
+
+    // Add student to teacher's myStudents array
+    if (!teacher.myStudents.includes(application.userId)) {
+      teacher.myStudents.push(application.userId);
+    }
+
+    await teacher.save();
+
     res.status(StatusCodes.OK).json({ message: 'Applicant approved' });
   } catch (error) {
     console.error('Error approving application:', error);
