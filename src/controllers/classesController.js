@@ -2,6 +2,8 @@ const cloudinary = require('cloudinary').v2;
 const fs = require('fs').promises;
 const Class = require('../models/Class');
 const User = require('../models/User');
+const Teacher = require('../models/Teacher');
+const Student = require('../models/Student');
 const { StatusCodes } = require('http-status-codes');
 const {
   BadRequestError,
@@ -395,37 +397,6 @@ const approveApplication = async (req, res) => {
       );
 
     await applicationToApprove.save();
-
-    // Update the student's myClasses and myTeachers arrays
-    const student = await User.findById(application.userId);
-    if (!student) {
-      throw new NotFoundError('Student not found');
-    }
-
-    // Add class to student's myClasses array
-    if (!student.myClasses.includes(classId)) {
-      student.myClasses.push(classId);
-    }
-
-    // Add teacher to student's myTeachers array
-    if (!student.myTeachers.includes(userId)) {
-      student.myTeachers.push(userId);
-    }
-
-    await student.save();
-
-    // Update the teacher's myStudents array
-    const teacher = await User.findById(userId);
-    if (!teacher) {
-      throw new NotFoundError('Teacher not found');
-    }
-
-    // Add student to teacher's myStudents array
-    if (!teacher.myStudents.includes(application.userId)) {
-      teacher.myStudents.push(application.userId);
-    }
-
-    await teacher.save();
 
     res.status(StatusCodes.OK).json({ message: 'Applicant approved' });
   } catch (error) {
