@@ -94,10 +94,13 @@ const loginUser = async (req, res) => {
     }
     const token = generateToken(user._id);
 
+    const userInfo = user.toObject();
+    delete userInfo.password;
+
     res.status(StatusCodes.OK).json({
       message: 'Login successful',
       user: {
-        ...user.filteredUser,
+        ...userInfo,
         token,
       },
     });
