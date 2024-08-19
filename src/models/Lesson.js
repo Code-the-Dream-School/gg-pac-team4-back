@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Class = require('./Class');
 
 const LessonSchema = new mongoose.Schema({
   createdBy: {
@@ -6,35 +7,31 @@ const LessonSchema = new mongoose.Schema({
     required: true,
     ref: 'User',
   },
-  lessonTitle: {
-    type: String,
-    required: [true, 'Please provide lesson title'],
-    default: function () {
-      return `Lesson 1: Welcome to ${this.className}`;
-    },
-  },
   classId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Class',
+  },
+  lessonTitle: {
+    type: String,
+    required: [true, 'Please provide lesson title'],
+    default: '',
   },
   studentId: {
     type: mongoose.Schema.Types.ObjectId,
     required: [true, 'Please add your student'],
     ref: 'User',
   },
-  lessonSchedule: [
-    {
-      date: {
-        type: Date,
-        required: [true, 'Please provide the date'],
-      },
-      startTime: {
-        type: String,
-        required: [true, 'Please provide the start time'],
-        default: '',
-      },
+  lessonSchedule: {
+    date: {
+      type: Date,
+      required: [true, 'Please provide the date'],
     },
-  ],
+    startTime: {
+      type: String,
+      required: [true, 'Please provide the start time'],
+      default: '',
+    },
+  },
   lessonDescription: {
     type: String,
     default: '',
@@ -44,12 +41,13 @@ const LessonSchema = new mongoose.Schema({
     default: '',
   },
   lessonFiles: {
-    type: String,
-    default:
-      'https://res.cloudinary.com/dn1ewxfy7/image/upload/v1722717323/2602291_dc5c66.jpg',
-    validate: {
-      validator: validateURL,
-      message: 'Invalid URL format',
+    url: {
+      type: String,
+      default: '',
+    },
+    publicId: {
+      type: String,
+      default: 'default_lesson_file',
     },
   },
 });

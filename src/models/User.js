@@ -56,7 +56,7 @@ const UserSchema = new mongoose.Schema(
     },
     aboutMe: {
       type: String,
-      maxlength: [500, 'About me must be at most 500 characters'],
+      maxlength: [1000, 'About me must be at most 500 characters'],
       default: '',
     },
     notifications: [
