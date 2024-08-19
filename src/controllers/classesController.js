@@ -2,6 +2,8 @@ const cloudinary = require('cloudinary').v2;
 const fs = require('fs').promises;
 const Class = require('../models/Class');
 const User = require('../models/User');
+const Teacher = require('../models/Teacher');
+const Student = require('../models/Student');
 const { StatusCodes } = require('http-status-codes');
 const {
   BadRequestError,
@@ -149,7 +151,7 @@ const createClass = async (req, res) => {
     const savedClass = await newClass.save();
 
     // Update user's myClasses with the new class ID
-    await User.findByIdAndUpdate(
+    await Teacher.findByIdAndUpdate(
       createdBy,
       { $push: { myClasses: savedClass._id } },
       { new: true } // Return the updated document
@@ -388,34 +390,8 @@ const approveApplication = async (req, res) => {
       appliedAt: application.appliedAt,
     });
 
-    // Remove the application from the applications array
-    applicationToApprove.applications =
-      applicationToApprove.applications.filter(
-        (app) => app._id.toString() !== applicationId
-      );
-
-    await applicationToApprove.save();
-
-    // Update the student's myClasses and myTeachers arrays
-    const student = await User.findById(application.userId);
-    if (!student) {
-      throw new NotFoundError('Student not found');
-    }
-
-    // Add class to student's myClasses array
-    if (!student.myClasses.includes(classId)) {
-      student.myClasses.push(classId);
-    }
-
-    // Add teacher to student's myTeachers array
-    if (!student.myTeachers.includes(userId)) {
-      student.myTeachers.push(userId);
-    }
-
-    await student.save();
-
     // Update the teacher's myStudents array
-    const teacher = await User.findById(userId);
+    const teacher = await Teacher.findById(userId);
     if (!teacher) {
       throw new NotFoundError('Teacher not found');
     }
@@ -426,6 +402,27 @@ const approveApplication = async (req, res) => {
     }
 
     await teacher.save();
+
+    // Update the student's myTeachers array
+    const student = await Student.findById(application.userId);
+    if (!student) {
+      throw new NotFoundError('Student not found');
+    }
+
+    // Add teacher to student's myTeachers array
+    if (!student.myTeachers.includes(userId)) {
+      student.myTeachers.push(userId);
+    }
+
+    await student.save();
+
+    // Remove the application from the applications array
+    applicationToApprove.applications =
+      applicationToApprove.applications.filter(
+        (app) => app._id.toString() !== applicationId
+      );
+
+    await applicationToApprove.save();
 
     res.status(StatusCodes.OK).json({ message: 'Applicant approved' });
   } catch (error) {
