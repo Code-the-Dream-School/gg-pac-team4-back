@@ -1,6 +1,8 @@
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs').promises;
 const User = require('../models/User');
+const Student = require('../models/Student');
+const Teacher = require('../models/Teacher');
 const { StatusCodes } = require('http-status-codes');
 const paginateAndSort = require('../utils/paginationSorting');
 const { NotFoundError } = require('../errors');
@@ -28,13 +30,27 @@ const getUsers = async (req, res) => {
   }
 };
 
-// Get a user by ID
+// Get user by ID
 const getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    let user = await User.findById(req.params.id).lean();
     if (!user) {
       throw new NotFoundError('User does not exist');
     }
+
+    // Fetch additional data based on user role
+    if (user.role === 'student') {
+      const studentData = await Student.findOne({ userId: user._id }).lean();
+      if (studentData) {
+        user = { ...user, ...studentData };
+      }
+    } else if (user.role === 'teacher') {
+      const teacherData = await Teacher.findOne({ userId: user._id }).lean();
+      if (teacherData) {
+        user = { ...user, ...teacherData };
+      }
+    }
+
     res.status(StatusCodes.OK).json(user);
   } catch (error) {
     res

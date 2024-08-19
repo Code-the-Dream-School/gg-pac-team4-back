@@ -3,8 +3,6 @@ const bcrypt = require('bcryptjs');
 const { lettersOnlyValidator } = require('../utils/letterValidation.js');
 const { validateURL } = require('../utils/urlValidation.js');
 
-const options = { discriminatorKey: 'role', timestamps: true };
-
 const UserSchema = new mongoose.Schema(
   {
     firstName: {
@@ -113,7 +111,7 @@ const UserSchema = new mongoose.Schema(
       default: [],
     },
   },
-  options
+  { discriminatorKey: 'role', timestamps: true }
 );
 
 // Before saving the users, hash the password
@@ -149,4 +147,6 @@ UserSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   return false; // False means NOT changed
 };
 
-module.exports = mongoose.model('User', UserSchema);
+const User = mongoose.model('User', UserSchema);
+
+module.exports = User;
