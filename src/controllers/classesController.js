@@ -403,8 +403,6 @@ const approveApplication = async (req, res) => {
 
     await teacher.save();
 
-    console.log('Student ID:', application.userId);
-
     // Update the student's myTeachers array
     const student = await Student.findById(application.userId);
     if (!student) {
