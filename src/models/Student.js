@@ -46,6 +46,6 @@ const StudentSchema = new mongoose.Schema(
   { discriminatorKey: 'role' }
 );
 
-const Student = User.discriminator('Student', StudentSchema);
+const Student = User.discriminator('student', StudentSchema);
 
 module.exports = Student;

@@ -276,7 +276,7 @@ const applyForClass = async (req, res) => {
   const role = req.user.role;
   const { availableTimeId } = req.body;
 
-  if (role !== 'Student') {
+  if (role !== 'student') {
     return res.status(StatusCodes.BAD_REQUEST).json({
       message: 'To apply for this class, you need to login as a student.',
     });
