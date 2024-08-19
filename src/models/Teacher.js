@@ -46,7 +46,7 @@ const TeacherSchema = new mongoose.Schema(
     myStudents: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Student',
+        ref: 'User',
         default: [],
       },
     ],
@@ -75,6 +75,6 @@ const TeacherSchema = new mongoose.Schema(
   { discriminatorKey: 'role' }
 );
 
-const Teacher = User.discriminator('Teacher', TeacherSchema);
+const Teacher = User.discriminator('teacher', TeacherSchema);
 
 module.exports = Teacher;

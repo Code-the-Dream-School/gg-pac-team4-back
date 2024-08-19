@@ -106,6 +106,10 @@ const updateUser = async (req, res) => {
     // Save user to the database and return the updated user with hashed password
     await user.save({ runValidators: true });
 
+    // Convert user to plain object and delete password field
+    const userInfo = user.toObject();
+    delete userInfo.password;
+
     res.status(StatusCodes.OK).json({ message: 'User successfully updated' });
   } catch (error) {
     console.error('Error updating user:', error);
