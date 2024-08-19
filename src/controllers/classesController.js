@@ -151,7 +151,7 @@ const createClass = async (req, res) => {
     const savedClass = await newClass.save();
 
     // Update user's myClasses with the new class ID
-    await User.findByIdAndUpdate(
+    await Teacher.findByIdAndUpdate(
       createdBy,
       { $push: { myClasses: savedClass._id } },
       { new: true } // Return the updated document
@@ -276,7 +276,7 @@ const applyForClass = async (req, res) => {
   const role = req.user.role;
   const { availableTimeId } = req.body;
 
-  if (role !== 'student') {
+  if (role !== 'Student') {
     return res.status(StatusCodes.BAD_REQUEST).json({
       message: 'To apply for this class, you need to login as a student.',
     });
@@ -390,16 +390,8 @@ const approveApplication = async (req, res) => {
       appliedAt: application.appliedAt,
     });
 
-    // Remove the application from the applications array
-    applicationToApprove.applications =
-      applicationToApprove.applications.filter(
-        (app) => app._id.toString() !== applicationId
-      );
-
-    await applicationToApprove.save();
-
     // Update the teacher's myStudents array
-    const teacher = await User.findById(userId);
+    const teacher = await Teacher.findById(userId);
     if (!teacher) {
       throw new NotFoundError('Teacher not found');
     }
@@ -410,6 +402,29 @@ const approveApplication = async (req, res) => {
     }
 
     await teacher.save();
+
+    console.log('Student ID:', application.userId);
+
+    // Update the student's myTeachers array
+    const student = await Student.findById(application.userId);
+    if (!student) {
+      throw new NotFoundError('Student not found');
+    }
+
+    // Add teacher to student's myTeachers array
+    if (!student.myTeachers.includes(userId)) {
+      student.myTeachers.push(userId);
+    }
+
+    await student.save();
+
+    // Remove the application from the applications array
+    applicationToApprove.applications =
+      applicationToApprove.applications.filter(
+        (app) => app._id.toString() !== applicationId
+      );
+
+    await applicationToApprove.save();
 
     res.status(StatusCodes.OK).json({ message: 'Applicant approved' });
   } catch (error) {
