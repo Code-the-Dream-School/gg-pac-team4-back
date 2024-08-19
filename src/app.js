@@ -20,6 +20,7 @@ cloudinary.config({
 
 const userRouter = require('./routes/userRouter.js');
 const classesRouter = require('./routes/classesRouter.js');
+const lessonsRouter = require('./routes/lessonsRouter.js');
 
 const connectDB = require('./db/db.js');
 connectDB();
@@ -37,7 +38,7 @@ app.get('/', (req, res) => {
   //for deploy reasons
   res.redirect('/api/v1');
 });
-app.use('/api/v1', userRouter);
+app.use('/api/v1', userRouter, lessonsRouter);
 
 app.use('/api/v1/classes', classesRouter);
 
