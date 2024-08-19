@@ -1,205 +1,118 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const {
-  adultValidator,
-  adultNameFirstAndLast,
-} = require('../utils/adultValidation');
 const { lettersOnlyValidator } = require('../utils/letterValidation.js');
 const { validateURL } = require('../utils/urlValidation.js');
 
-// Define the Users schema
-const UserSchema = new mongoose.Schema({
-  firstName: {
-    type: String,
-    required: [true, 'Please provide a first name'],
-    minlength: 2,
-    maxlength: 50,
-    validate: lettersOnlyValidator,
-  },
-  lastName: {
-    type: String,
-    required: [true, 'Please provide a last name'],
-    minlength: 2,
-    maxlength: 50,
-    validate: lettersOnlyValidator,
-  },
-  dateOfBirth: {
-    type: Date,
-    required: function () {
-      return this.role === 'student';
-    }, // Required only for students
-  },
-  adultName: {
-    type: String,
-    validate: [
-      lettersOnlyValidator,
-      ...adultValidator, // Spread operator is used to include multiple validators
-      adultNameFirstAndLast,
-    ],
-  },
-  phoneNumber: {
-    type: String,
-    default: '',
-    match: [
-      /^(?:\+?\d{1,3}[-.\s]?)?(?:\(?\d{1,4}\)?[-.\s]?)?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$/,
-      'Please provide a valid phone number',
-    ],
-  },
-  email: {
-    type: String,
-    required: [true, 'Please provide an email'],
-    unique: true,
-    match: [
-      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
-      'Please provide a valid email',
-    ],
-  },
-  password: {
-    type: String,
-    required: [true, 'Please provide a password'],
-    minlength: 6,
-  },
-  passwordChangedAt: Date,
-  resetPasswordToken: String,
-  resetPasswordExpires: Date,
-
-  role: {
-    type: String,
-    enum: ['student', 'teacher'],
-    required: true,
-  },
-  profileImageUrl: {
-    type: String,
-    default:
-      'https://res.cloudinary.com/dn1ewxfy7/image/upload/v1722717323/55055_eqqnfd.jpg',
-    validate: {
-      validator: validateURL,
-      message: 'Invalid URL format',
+const UserSchema = new mongoose.Schema(
+  {
+    firstName: {
+      type: String,
+      required: [true, 'Please provide a first name'],
+      minlength: [2, 'First name must be at least 2 characters'],
+      maxlength: [50, 'First name must be at most 50 characters'],
+      validate: lettersOnlyValidator,
     },
-  },
-  profileImagePublicId: {
-    type: String,
-    default: 'default_profile_image',
-  },
-  profileVideoUrl: {
-    type: String,
-    default: '',
-  },
-  profileVideoPublicId: {
-    type: String,
-    default: 'default_profile_video',
-  },
-  profilePortfolioImages: [
-    {
-      url: {
-        type: String,
-        default: '',
-      },
-      publicId: {
-        type: String,
-        default: 'default_portfolio_image',
+    lastName: {
+      type: String,
+      required: [true, 'Please provide a last name'],
+      minlength: [2, 'Last name must be at least 2 characters'],
+      maxlength: [50, 'Last name must be at most 50 characters'],
+      validate: lettersOnlyValidator,
+    },
+    email: {
+      type: String,
+      required: [true, 'Please provide an email'],
+      unique: true,
+      match: [
+        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+        'Please provide a valid email',
+      ],
+    },
+    password: {
+      type: String,
+      required: [true, 'Please provide a password'],
+      minlength: 6,
+    },
+    passwordChangedAt: Date,
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
+    profileImageUrl: {
+      type: String,
+      default:
+        'https://res.cloudinary.com/dn1ewxfy7/image/upload/v1722717323/55055_eqqnfd.jpg',
+      validate: {
+        validator: validateURL,
+        message: 'Invalid URL format',
       },
     },
-  ],
-  profilePortfolioVideos: [
-    {
-      url: {
-        type: String,
-        default: '',
-      },
-      publicId: {
-        type: String,
-        default: 'default_portfolio_video',
-      },
+    role: {
+      type: String,
+      enum: ['student', 'teacher'],
+      required: true,
     },
-  ],
-  aboutMe: {
-    type: String,
-    maxlength: 1000,
-    default: '',
-  },
-  education: {
-    type: String,
-    default: '',
-  },
-  experience: {
-    type: String,
-    default: '',
-  },
-  subjectArea: {
-    type: [String],
-    enum: [
-      'Music',
-      'Arts',
-      'Dance',
-      'Photography',
-      'Film Production',
-      'Design',
-      'Acting Skills',
-      'Storytelling',
-      'Ceramics & Sculpture',
-      'Handicrafts',
-      '3D & Animation',
-      'Games & Hobbies',
+    profileImagePublicId: {
+      type: String,
+      default: 'default_profile_image',
+    },
+    aboutMe: {
+      type: String,
+      maxlength: [500, 'About me must be at most 500 characters'],
+      default: '',
+    },
+    notifications: [
+      {
+        message: {
+          type: String,
+          required: true,
+        },
+        date: {
+          type: Date,
+          default: Date.now,
+        },
+        read: {
+          type: Boolean,
+          default: false,
+        },
+      },
     ],
-    default: [],
-  },
-  hourlyRate: {
-    type: Number,
-    required: function () {
-      return this.role === 'teacher' && this.isModified('hourlyRate');
+    messages: [
+      {
+        sender: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+          required: true,
+        },
+        content: {
+          type: String,
+          required: true,
+        },
+        date: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+    subjectArea: {
+      type: [String],
+      enum: [
+        'Music',
+        'Arts',
+        'Dance',
+        'Photography',
+        'Film Production',
+        'Design',
+        'Acting Skills',
+        'Storytelling',
+        'Ceramics & Sculpture',
+        'Handicrafts',
+        '3D & Animation',
+        'Games & Hobbies',
+      ],
+      default: [],
     },
   },
-  availability: {
-    type: String,
-    required: function () {
-      return this.role === 'teacher' && this.isModified('availability');
-    },
-  },
-  myClasses: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Class',
-    },
-  ],
-  myStudents: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-    },
-  ],
-  myTeachers: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-    },
-  ],
-});
-
-UserSchema.virtual('filteredUser').get(function () {
-  const user = this.toObject();
-
-  // Remove fields for non-teachers
-  if (user.role !== 'teacher') {
-    delete user.education;
-    delete user.experience;
-    delete user.profilePortfolioVideos;
-    delete user.profilePortfolioImages;
-    delete user.profileVideoUrl;
-    delete user.profileVideoPublicId;
-    delete user.myStudents;
-  }
-
-  if (user.role !== 'student') {
-    delete user.myTeachers;
-    delete user.dateOfBirth;
-  }
-
-  // Remove sensitive information
-  delete user.password;
-
-  return user;
-});
+  { discriminatorKey: 'role', timestamps: true }
+);
 
 // Before saving the users, hash the password, check the role and remove the field if it should not be set
 UserSchema.pre('save', async function (next) {
@@ -251,4 +164,6 @@ UserSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   return false; // False means NOT changed
 };
 
-module.exports = mongoose.model('User', UserSchema);
+const User = mongoose.model('User', UserSchema);
+
+module.exports = User;
