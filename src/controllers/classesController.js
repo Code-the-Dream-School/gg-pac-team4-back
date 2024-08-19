@@ -401,19 +401,6 @@ const approveApplication = async (req, res) => {
 
     await teacher.save();
 
-    // Update the student's myTeachers array
-    const student = await Student.findById(application.userId);
-    if (!student) {
-      throw new NotFoundError('Student not found');
-    }
-
-    // Add teacher to student's myTeachers array
-    if (!student.myTeachers.includes(userId)) {
-      student.myTeachers.push(userId);
-    }
-
-    await student.save();
-
     const classInfo = await Class.findById(classId);
     const lessonTitle = `Lesson 1: Welcome to ${classInfo.classTitle} class.`;
     const lessonDescription = `$${classInfo.description}`;
@@ -430,7 +417,26 @@ const approveApplication = async (req, res) => {
       },
     });
 
-    await lesson.save();
+    const savedLesson = await lesson.save();
+    const lessonId = savedLesson._id;
+
+    // Update the student's myTeachers array
+    const student = await Student.findById(application.userId);
+    if (!student) {
+      throw new NotFoundError('Student not found');
+    }
+
+    // Add teacher to student's myTeachers array
+    if (!student.myTeachers.includes(userId)) {
+      student.myTeachers.push(userId);
+    }
+
+    // Add lesson to student's myLessons array
+    if (!student.myLessons.includes(lessonId)) {
+      student.myLessons.push(lessonId);
+    }
+
+    await student.save();
 
     // Remove the application from the applications array
     applicationToApprove.applications =
