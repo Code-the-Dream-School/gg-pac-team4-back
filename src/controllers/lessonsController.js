@@ -131,7 +131,14 @@ const getLessonDetails = async (req, res) => {
 //create a new lesson
 const createLesson = async (req, res) => {
   const createdBy = req.user.userId;
+  const userRole = req.user.role;
   const { studentId } = req.params;
+
+  if (userRole !== 'teacher') {
+    return res.status(StatusCodes.FORBIDDEN).json({
+      message: 'Only teachers can create lessons.',
+    });
+  }
 
   try {
     const { lessonTitle, lessonDescription, lessonSchedule, type } = req.body;
@@ -163,7 +170,7 @@ const createLesson = async (req, res) => {
     const newLesson = new Lesson({
       lessonTitle,
       lessonDescription,
-      type,
+      type: classInfo.type,
       lessonSchedule,
       createdBy,
       studentId,
