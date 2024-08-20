@@ -250,7 +250,14 @@ const editLesson = async (req, res) => {
 //delete lesson
 const deleteLesson = async (req, res) => {
   const { lessonId } = req.params;
+  const userRole = req.user.role;
   const userId = req.user.userId;
+
+  if (userRole !== 'teacher') {
+    return res.status(StatusCodes.FORBIDDEN).json({
+      message: 'Only teachers can delete lessons.',
+    });
+  }
   try {
     const lessonToDelete = await Lesson.findById(lessonId);
 
