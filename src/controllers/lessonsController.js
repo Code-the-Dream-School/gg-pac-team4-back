@@ -197,9 +197,17 @@ const createLesson = async (req, res) => {
   }
 };
 
+//Edit lesson
 const editLesson = async (req, res) => {
   const userId = req.user.userId;
+  const userRole = req.user.role;
   const { lessonId } = req.params;
+
+  if (userRole !== 'teacher') {
+    return res.status(StatusCodes.FORBIDDEN).json({
+      message: 'Only teachers can edit lessons.',
+    });
+  }
   try {
     const lessonToEdit = await Lesson.findById(lessonId);
 
@@ -239,6 +247,7 @@ const editLesson = async (req, res) => {
   }
 };
 
+//delete lesson
 const deleteLesson = async (req, res) => {
   const { lessonId } = req.params;
   const userId = req.user.userId;
