@@ -17,6 +17,19 @@ const displayStudentLessons = async (req, res) => {
   const { studentId } = req.params;
 
   try {
+    const teacher = await Teacher.findById(userId);
+
+    if (!teacher) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        message: 'Teacher not found',
+      });
+    }
+    // Check if the student is in the `myStudents` array of the teacher
+    if (!teacher.myStudents.includes(studentId)) {
+      return res.status(StatusCodes.FORBIDDEN).json({
+        message: 'The student is not listed under your students.',
+      });
+    }
     const lessons = await Lesson.find({
       createdBy: userId,
       studentId: studentId,
@@ -38,6 +51,11 @@ const getLessonDetails = async (req, res) => {
   const userId = req.user.userId;
   const { studentId, lessonId } = req.params;
   try {
+    const studentId = await Teacher.findById(myStudents);
+    throw new NotFoundError('Lesson does not exist');
+    if (!studentId) {
+    }
+
     const lessonDetails = await Lesson.findById(lessonId);
 
     if (!lessonDetails) {
@@ -96,6 +114,13 @@ const createLesson = async (req, res) => {
     });
 
     const savedLesson = await newLesson.save();
+
+    // Update student's myLessons with the new class ID
+    await Student.findByIdAndUpdate(
+      studentId,
+      { $push: { myLessons: savedLesson._id } },
+      { new: true } // Return the updated document
+    );
 
     res
       .status(StatusCodes.CREATED)
