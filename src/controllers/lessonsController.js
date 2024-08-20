@@ -82,6 +82,7 @@ const displayStudentLessons = async (req, res) => {
 //Display lesson details
 const getLessonDetails = async (req, res) => {
   const userId = req.user.userId;
+  const userRole = req.user.role;
   const { studentId, lessonId } = req.params;
 
   try {
@@ -94,11 +95,25 @@ const getLessonDetails = async (req, res) => {
       });
     }
 
-    // Check if the user is either the creator of the lesson or the student assigned to it
-    if (
-      lessonDetails.createdBy !== userId &&
-      lessonDetails.studentId !== userId
-    ) {
+    if (userRole === 'teacher') {
+      // Check if the user is the creator of the lesson
+      if (lessonDetails.createdBy.toString() !== userId) {
+        return res.status(StatusCodes.FORBIDDEN).json({
+          message: 'You are not authorized to view these lesson details.',
+        });
+      }
+    } else if (userRole === 'student') {
+      // Check if the user is the student assigned to the lesson
+      if (
+        lessonDetails.studentId.toString() !== studentId ||
+        studentId !== userId
+      ) {
+        return res.status(StatusCodes.FORBIDDEN).json({
+          message: 'You are not authorized to view these lesson details.',
+        });
+      }
+    } else {
+      // If the user's role is neither teacher nor student, return forbidden
       return res.status(StatusCodes.FORBIDDEN).json({
         message: 'You are not authorized to view these lesson details.',
       });
@@ -107,9 +122,9 @@ const getLessonDetails = async (req, res) => {
     res.status(StatusCodes.OK).json({ lesson: lessonDetails });
   } catch (error) {
     console.error('Error retrieving lesson details:', error);
-    res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ message: 'Internal server error' });
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: 'Internal server error',
+    });
   }
 };
 
