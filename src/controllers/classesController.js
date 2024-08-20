@@ -410,13 +410,14 @@ const approveApplication = async (req, res) => {
 
     const classInfo = await Class.findById(classId);
     const lessonTitle = `Lesson 1: Welcome to ${classInfo.classTitle} class.`;
-    const lessonDescription = `$${classInfo.description}`;
+    const lessonDescription = `${classInfo.description}`;
 
     const lesson = new Lesson({
       createdBy: userId,
       studentId: application.userId,
       classId: classId,
       lessonTitle,
+      type: classInfo.type,
       lessonDescription,
       lessonSchedule: {
         date: application.date,
