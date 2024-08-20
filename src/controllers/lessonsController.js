@@ -14,44 +14,68 @@ const ForbiddenError = require('../errors/forbidden');
 //Display all one of my student lessons
 const displayStudentLessons = async (req, res) => {
   const userId = req.user.userId;
+  const userRole = req.user.role;
   const { studentId } = req.params;
 
   try {
-    const teacher = await Teacher.findById(userId);
+    if (userRole === 'teacher') {
+      const teacher = await Teacher.findById(userId);
 
-    if (!teacher) {
-      return res.status(StatusCodes.NOT_FOUND).json({
-        message: 'Teacher not found',
+      if (!teacher) {
+        return res.status(StatusCodes.NOT_FOUND).json({
+          message: 'Teacher not found',
+        });
+      }
+
+      // Check if the teacher has any students
+      if (teacher.myStudents.length === 0) {
+        return res.status(StatusCodes.NOT_FOUND).json({
+          message: "Sorry, you don't have any students.",
+        });
+      }
+
+      // Check if the student is in the `myStudents` array of the teacher
+      if (!teacher.myStudents.includes(studentId)) {
+        return res.status(StatusCodes.FORBIDDEN).json({
+          message: 'The student is not listed under your students.',
+        });
+      }
+      // Fetch lessons created by this teacher for the specified student
+      const lessons = await Lesson.find({
+        createdBy: userId,
+        studentId: studentId,
       });
-    }
 
-    // Check if the teacher has any students
-    if (teacher.myStudents.length === 0) {
-      return res.status(StatusCodes.NOT_FOUND).json({
-        message: "Sorry, you don't have any students.",
+      return res.status(StatusCodes.OK).json({
+        lessons,
       });
-    }
+    } else if (userRole === 'student') {
+      // If the user is a student, ensure they are trying to view their own lessons
+      if (userId !== studentId) {
+        return res.status(StatusCodes.FORBIDDEN).json({
+          message: 'You are not authorized to view these lessons.',
+        });
+      }
 
-    // Check if the student is in the `myStudents` array of the teacher
-    if (!teacher.myStudents.includes(studentId)) {
+      // Fetch lessons for this student
+      const lessons = await Lesson.find({
+        studentId: userId,
+      });
+
+      return res.status(StatusCodes.OK).json({
+        lessons,
+      });
+    } else {
+      // If the user is neither a teacher nor a student, return a forbidden error
       return res.status(StatusCodes.FORBIDDEN).json({
-        message: 'The student is not listed under your students.',
+        message: 'You are not authorized to view these lessons.',
       });
     }
-
-    const lessons = await Lesson.find({
-      createdBy: userId,
-      studentId: studentId,
-    });
-
-    res.status(StatusCodes.OK).json({
-      lessons,
-    });
   } catch (error) {
     console.error('Error retrieving lessons:', error);
-    res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ message: 'Internal server error' });
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: 'Internal server error',
+    });
   }
 };
 
