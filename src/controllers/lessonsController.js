@@ -59,16 +59,25 @@ const displayStudentLessons = async (req, res) => {
 const getLessonDetails = async (req, res) => {
   const userId = req.user.userId;
   const { studentId, lessonId } = req.params;
-  try {
-    const studentId = await Teacher.findById(myStudents);
-    throw new NotFoundError('Lesson does not exist');
-    if (!studentId) {
-    }
 
+  try {
+    // Find the lesson by ID
     const lessonDetails = await Lesson.findById(lessonId);
 
     if (!lessonDetails) {
-      throw new NotFoundError('Lesson does not exist');
+      return res.status(StatusCodes.NOT_FOUND).json({
+        message: 'Lesson does not exist',
+      });
+    }
+
+    // Check if the user is either the creator of the lesson or the student assigned to it
+    if (
+      lessonDetails.createdBy !== userId &&
+      lessonDetails.studentId !== userId
+    ) {
+      return res.status(StatusCodes.FORBIDDEN).json({
+        message: 'You are not authorized to view these lesson details.',
+      });
     }
 
     res.status(StatusCodes.OK).json({ lesson: lessonDetails });
