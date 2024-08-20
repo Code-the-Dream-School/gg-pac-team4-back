@@ -15,6 +15,18 @@ router
     '/myStudents/:studentId/lessons/:lessonId',
     authenticationMiddleware,
     lessonsController.getLessonDetails
+  )
+  .post(
+    '/myStudents/:studentId/lessons',
+    authenticationMiddleware,
+    lessonsController.createLesson
   );
 
+//   .patch(
+//     '/myStudents/:studentId/lessons/:lessonId',
+//     authenticationMiddleware,
+//     lessonsController.editLesson
+//   )
+//   .delete('/myStudents/:studentId/lessons/:lessonId', authenticationMiddleware, lessonsController.editLesson
+//   );
 module.exports = router;

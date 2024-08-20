@@ -50,6 +50,14 @@ const LessonSchema = new mongoose.Schema({
       default: 'default_lesson_file',
     },
   },
+  type: {
+    type: String,
+    required: [true, 'Please provide the type of class'],
+    enum: {
+      values: ['online', 'offline'],
+      message: 'Type must be either "online" or "offline"',
+    },
+  },
 });
 
 const LessonModel = mongoose.model('Lesson', LessonSchema, 'Lessons');
