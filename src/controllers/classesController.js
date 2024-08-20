@@ -258,6 +258,13 @@ const deleteClass = async (req, res) => {
       await cloudinary.uploader.destroy(classToDelete.classImagePublicId);
     }
 
+    // Remove the class from the creator's myClasses array
+    await Teacher.findByIdAndUpdate(
+      userId,
+      { $pull: { myClasses: classId } },
+      { new: true }
+    );
+
     await Class.findByIdAndDelete(classId);
 
     res.status(StatusCodes.OK).json({ message: 'Class successfully deleted' });
