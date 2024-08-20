@@ -249,7 +249,7 @@ const editLesson = async (req, res) => {
 
 //delete lesson
 const deleteLesson = async (req, res) => {
-  const { lessonId } = req.params;
+  const { lessonId, studentId } = req.params;
   const userRole = req.user.role;
   const userId = req.user.userId;
 
@@ -273,6 +273,13 @@ const deleteLesson = async (req, res) => {
         'You do not have permission to delete this lesson'
       );
     }
+
+    // Remove the lesson from the student's myLessons array
+    await Student.findByIdAndUpdate(
+      studentId,
+      { $pull: { myLessons: lessonId } },
+      { new: true }
+    );
 
     await Lesson.findByIdAndDelete(lessonId);
 
