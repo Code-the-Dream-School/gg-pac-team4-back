@@ -54,7 +54,7 @@ router.patch(
 router.patch(
   '/users/:id/portfolioImages',
   authenticationMiddleware,
-  upload.array('profilePortfolioImage'),
+  upload.array('profilePortfolioImages'),
   addProfilePortfolioImage
 );
 router.patch(

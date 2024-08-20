@@ -1,6 +1,9 @@
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs').promises;
 const Class = require('../models/Class');
+const User = require('../models/User');
+const Teacher = require('../models/Teacher');
+const Student = require('../models/Student');
 const { StatusCodes } = require('http-status-codes');
 const {
   BadRequestError,
@@ -67,24 +70,7 @@ const getClassDetails = async (req, res) => {
       throw new NotFoundError('Class does not exist');
     }
 
-    const response = {
-      category: classDetail.category,
-      classTitle: classDetail.classTitle,
-      description: classDetail.description,
-      price: classDetail.price,
-      duration: classDetail.duration,
-      ages: classDetail.ages,
-      type: classDetail.type,
-      goal: classDetail.goal,
-      experience: classDetail.experience,
-      other: classDetail.other,
-      availableTime: classDetail.availableTime,
-      createdBy: classDetail.createdBy,
-      likes: classDetail.likes,
-      classImageUrl: classDetail.classImageUrl,
-    };
-
-    res.status(StatusCodes.OK).json({ class: response });
+    res.status(StatusCodes.OK).json({ class: classDetail });
   } catch (error) {
     console.error('Error retrieving class details:', error);
     res
@@ -110,6 +96,7 @@ const createClass = async (req, res) => {
       experience,
       other,
       availableTime,
+      lessonType,
     } = req.body;
 
     const existingClass = await Class.findOne({
@@ -157,9 +144,19 @@ const createClass = async (req, res) => {
       createdBy,
       classImageUrl,
       classImagePublicId,
+      lessonType,
     });
 
-    await newClass.save();
+    // Save the new class and get the savedClass object
+    const savedClass = await newClass.save();
+
+    // Update user's myClasses with the new class ID
+    await Teacher.findByIdAndUpdate(
+      createdBy,
+      { $push: { myClasses: savedClass._id } },
+      { new: true } // Return the updated document
+    );
+
     res
       .status(StatusCodes.CREATED)
       .json({ message: 'Class created successfully' });
@@ -271,10 +268,223 @@ const deleteClass = async (req, res) => {
   }
 };
 
+//apply for class
+
+const applyForClass = async (req, res) => {
+  const { classId } = req.params;
+  const userId = req.user.userId;
+  const role = req.user.role;
+  const { availableTimeId } = req.body;
+
+  if (role !== 'student') {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      message: 'To apply for this class, you need to login as a student.',
+    });
+  }
+
+  try {
+    const classToApply = await Class.findById(classId);
+
+    if (!classToApply) {
+      throw new NotFoundError('Class does not exist');
+    }
+
+    const hasApplied = classToApply.applications.some(
+      (applications) => applications.userId.toString() === userId.toString()
+    );
+
+    if (hasApplied) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ message: 'You have already applied for this class.' });
+    }
+
+    const availableTimeSlot = classToApply.availableTime.id(availableTimeId);
+
+    if (!availableTimeSlot) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ message: 'Invalid time slot ID.' });
+    }
+
+    // Check lesson type and handle applications accordingly
+    if (classToApply.lessonType === '1:1') {
+      // Check if there is already an application (if you are enforcing only one student per class)
+      if (classToApply.applications.length > 0) {
+        return res
+          .status(StatusCodes.BAD_REQUEST)
+          .json({ message: 'This class is already booked.' });
+      }
+
+      classToApply.applications.push({ userId });
+      // Remove the applied time slot from availableTime
+      await Class.findByIdAndUpdate(
+        classId,
+        { $pull: { availableTime: { _id: availableTimeId } } },
+        { new: true }
+      );
+      await classToApply.save();
+      return res.status(StatusCodes.OK).json({
+        message: 'You have successfully applied for the one-on-one class.',
+      });
+    } else if (classToApply.lessonType === 'Group') {
+      // Add application for group lesson
+      classToApply.applications.push({ userId });
+      await classToApply.save();
+      return res.status(StatusCodes.OK).json({
+        message: 'You have successfully applied for the group class.',
+      });
+    } else {
+      throw new BadRequestError('Invalid class type');
+    }
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: 'An error occurred while applying for the class.' });
+  }
+};
+
+const approveApplication = async (req, res) => {
+  const { classId, applicationId } = req.params;
+  const userId = req.user.userId;
+
+  try {
+    const applicationToApprove = await Class.findById(classId);
+
+    if (!applicationToApprove) {
+      throw new NotFoundError('Application does not exist');
+    }
+
+    if (
+      !applicationToApprove.createdBy ||
+      applicationToApprove.createdBy.toString() !== userId
+    ) {
+      throw new ForbiddenError(
+        'You do not have permission to approve this application.'
+      );
+    }
+
+    // Find the application entry by ID
+    const application = applicationToApprove.applications.id(applicationId);
+
+    if (!application) {
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ message: 'Application not found' });
+    }
+
+    // Check if the user has already been approved
+    const alreadyApproved = applicationToApprove.classStudents.some(
+      (student) => student.userId.toString() === application.userId.toString()
+    );
+    if (alreadyApproved) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ message: 'Already approved' });
+    }
+
+    // Move the application to classStudents and remove it from applications
+    applicationToApprove.classStudents.push({
+      userId: application.userId,
+      appliedAt: application.appliedAt,
+    });
+
+    // Update the teacher's myStudents array
+    const teacher = await Teacher.findById(userId);
+    if (!teacher) {
+      throw new NotFoundError('Teacher not found');
+    }
+
+    // Add student to teacher's myStudents array
+    if (!teacher.myStudents.includes(application.userId)) {
+      teacher.myStudents.push(application.userId);
+    }
+
+    await teacher.save();
+
+    // Update the student's myTeachers array
+    const student = await Student.findById(application.userId);
+    if (!student) {
+      throw new NotFoundError('Student not found');
+    }
+
+    // Add teacher to student's myTeachers array
+    if (!student.myTeachers.includes(userId)) {
+      student.myTeachers.push(userId);
+    }
+
+    await student.save();
+
+    // Remove the application from the applications array
+    applicationToApprove.applications =
+      applicationToApprove.applications.filter(
+        (app) => app._id.toString() !== applicationId
+      );
+
+    await applicationToApprove.save();
+
+    res.status(StatusCodes.OK).json({ message: 'Applicant approved' });
+  } catch (error) {
+    console.error('Error approving application:', error);
+    const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+    const errorMessage = error.message || 'Internal server error';
+    res.status(statusCode).json({ message: errorMessage });
+  }
+};
+
+const rejectApplication = async (req, res) => {
+  const { classId, applicationId } = req.params;
+  const userId = req.user.userId;
+
+  try {
+    const applicationToReject = await Class.findById(classId);
+
+    if (!applicationToReject) {
+      throw new NotFoundError('Application does not exist');
+    }
+
+    if (
+      !applicationToReject.createdBy ||
+      applicationToReject.createdBy.toString() !== userId
+    ) {
+      throw new ForbiddenError(
+        'You do not have permission to reject this application.'
+      );
+    }
+
+    // Find the application to reject by ID
+    const application = applicationToReject.applications.id(applicationId);
+
+    if (!application) {
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ message: 'Application not found' });
+    }
+
+    // Remove the rejected application
+    applicationToReject.applications = applicationToReject.applications.filter(
+      (application) => application._id.toString() !== applicationId
+    );
+
+    await applicationToReject.save();
+
+    res.status(StatusCodes.OK).json({ message: 'Application rejected' });
+  } catch (error) {
+    console.error('Error rejecting application:', error);
+    const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+    const errorMessage = error.message || 'Internal server error';
+    res.status(statusCode).json({ message: errorMessage });
+  }
+};
+
 module.exports = {
   displaySearchClasses,
   createClass,
   getClassDetails,
   editClass,
   deleteClass,
+  applyForClass,
+  approveApplication,
+  rejectApplication,
 };

@@ -1,4 +1,6 @@
 const User = require('../models/User.js');
+const Student = require('../models/Student.js');
+const Teacher = require('../models/Teacher.js');
 const { calculateAge } = require('../utils/adultValidation.js');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -10,12 +12,13 @@ const generateToken = (userId) => {
   const token = jwt.sign({ userId }, secret, { expiresIn: '1h' });
   return token;
 };
-
+// Function to register a user with a specified role
 const registerUser = async (req, res, role) => {
   try {
     const { firstName, lastName, email, password, dateOfBirth, adultName } =
       req.body;
 
+    // Check if a user with the provided email already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       throw new BadRequestError(
@@ -23,14 +26,7 @@ const registerUser = async (req, res, role) => {
       );
     }
 
-    const newUser = {
-      firstName,
-      lastName,
-      email,
-      password,
-      role,
-    };
-
+    let newUser;
     if (role === 'student') {
       const age = calculateAge(dateOfBirth);
 
@@ -41,18 +37,30 @@ const registerUser = async (req, res, role) => {
         );
       }
 
-      newUser.dateOfBirth = dateOfBirth;
-      newUser.adultName = age < 16 ? adultName : undefined;
+      // Create a new Student instance
+      newUser = new Student({
+        firstName,
+        lastName,
+        email,
+        password,
+        dateOfBirth,
+        adultName: age < 16 ? adultName : undefined,
+      });
+    } else if (role === 'teacher') {
+      newUser = new Teacher({
+        firstName,
+        lastName,
+        email,
+        password,
+      });
     }
 
-    const newUserInstance = new User(newUser);
-
-    await newUserInstance.save();
+    // Save the new user to the database
+    await newUser.save();
+    // Generate a JWT token for the new user
     const token = generateToken(newUser._id);
     res.status(StatusCodes.CREATED).json({
-      message: `${
-        role.charAt(0).toUpperCase() + role.slice(1)
-      } registered successfully`,
+      message: `${role.charAt(0).toUpperCase() + role.slice(1)} registered successfully`,
       token,
     });
   } catch (error) {
@@ -62,8 +70,9 @@ const registerUser = async (req, res, role) => {
     res.status(statusCode).json({ message: errorMessage });
   }
 };
-
+// Function to register a student
 const registerStudent = (req, res) => registerUser(req, res, 'student');
+// Function to register a teacher
 const registerTeacher = (req, res) => registerUser(req, res, 'teacher');
 
 //Login
@@ -85,13 +94,13 @@ const loginUser = async (req, res) => {
     }
     const token = generateToken(user._id);
 
-    const userObj = user.toObject();
-    delete userObj.password;
+    const userInfo = user.toObject();
+    delete userInfo.password;
 
     res.status(StatusCodes.OK).json({
       message: 'Login successful',
       user: {
-        ...userObj,
+        ...userInfo,
         token,
       },
     });
