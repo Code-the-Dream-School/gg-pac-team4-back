@@ -151,8 +151,33 @@ const editLesson = async (req, res) => {
 };
 
 const deleteLesson = async (req, res) => {
+  const { lessonId } = req.params;
+  const userId = req.user.userId;
   try {
-  } catch {}
+    const lessonToDelete = await Lesson.findById(lessonId);
+
+    if (!lessonToDelete) {
+      throw new NotFoundError('Lesson does not exist');
+    }
+
+    if (
+      !lessonToDelete.createdBy ||
+      lessonToDelete.createdBy.toString() !== userId
+    ) {
+      throw new ForbiddenError(
+        'You do not have permission to delete this lesson'
+      );
+    }
+
+    await Lesson.findByIdAndDelete(lessonId);
+
+    res.status(StatusCodes.OK).json({ message: 'Lesson successfully deleted' });
+  } catch (error) {
+    console.error('Error deleting lesson:', error);
+    const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+    const errorMessage = error.message || 'Internal server error';
+    res.status(statusCode).json({ message: errorMessage });
+  }
 };
 
 module.exports = {
