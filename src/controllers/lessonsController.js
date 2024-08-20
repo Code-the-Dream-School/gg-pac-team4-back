@@ -24,12 +24,21 @@ const displayStudentLessons = async (req, res) => {
         message: 'Teacher not found',
       });
     }
+
+    // Check if the teacher has any students
+    if (teacher.myStudents.length === 0) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        message: "Sorry, you don't have any students.",
+      });
+    }
+
     // Check if the student is in the `myStudents` array of the teacher
     if (!teacher.myStudents.includes(studentId)) {
       return res.status(StatusCodes.FORBIDDEN).json({
         message: 'The student is not listed under your students.',
       });
     }
+
     const lessons = await Lesson.find({
       createdBy: userId,
       studentId: studentId,
