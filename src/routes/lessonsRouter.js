@@ -20,13 +20,16 @@ router
     '/myStudents/:studentId/lessons',
     authenticationMiddleware,
     lessonsController.createLesson
+  )
+  .patch(
+    '/myStudents/:studentId/lessons/:lessonId',
+    authenticationMiddleware,
+    lessonsController.editLesson
+  )
+  .delete(
+    '/myStudents/:studentId/lessons/:lessonId',
+    authenticationMiddleware,
+    lessonsController.deleteLesson
   );
 
-//   .patch(
-//     '/myStudents/:studentId/lessons/:lessonId',
-//     authenticationMiddleware,
-//     lessonsController.editLesson
-//   )
-//   .delete('/myStudents/:studentId/lessons/:lessonId', authenticationMiddleware, lessonsController.editLesson
-//   );
 module.exports = router;

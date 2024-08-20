@@ -108,8 +108,57 @@ const createLesson = async (req, res) => {
   }
 };
 
+const editLesson = async (req, res) => {
+  const userId = req.user.userId;
+  const { lessonId } = req.params;
+  try {
+    const lessonToEdit = await Lesson.findById(lessonId);
+
+    if (!lessonToEdit) {
+      throw new NotFoundError('Lesson does not exist');
+    }
+
+    if (
+      !lessonToEdit.createdBy ||
+      lessonToEdit.createdBy.toString() !== userId
+    ) {
+      throw new ForbiddenError(
+        'You do not have permission to edit this lesson.'
+      );
+    }
+
+    const updateData = {};
+
+    Object.entries(req.body).forEach(([key, value]) => {
+      if (key !== 'lessons') {
+        updateData[key] = value;
+      }
+    });
+
+    const updatedLesson = await Lesson.findByIdAndUpdate(
+      lessonId,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    );
+
+    res.status(StatusCodes.OK).json({ lesson: updatedLesson });
+  } catch (error) {
+    console.error('Error editing lesson:', error);
+    const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+    const errorMessage = error.message || 'Internal server error';
+    res.status(statusCode).json({ message: errorMessage });
+  }
+};
+
+const deleteLesson = async (req, res) => {
+  try {
+  } catch {}
+};
+
 module.exports = {
   displayStudentLessons,
   getLessonDetails,
   createLesson,
+  editLesson,
+  deleteLesson,
 };

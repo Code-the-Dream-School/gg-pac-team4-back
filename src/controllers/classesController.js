@@ -226,7 +226,7 @@ const editClass = async (req, res) => {
       { new: true, runValidators: true }
     );
 
-    res.status(StatusCodes.OK).json({ project: updatedClass });
+    res.status(StatusCodes.OK).json({ class: updatedClass });
   } catch (error) {
     console.error('Error editing class:', error);
     const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
