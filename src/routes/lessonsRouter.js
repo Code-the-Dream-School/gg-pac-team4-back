@@ -5,10 +5,16 @@ const authenticationMiddleware = require('../middleware/authentication');
 // const upload = require('../middleware/multerMiddleware');
 
 // GET, POST, PATCH, DELETE /api/v1/
-router.get(
-  '/myStudents/:studentId/lessons',
-  authenticationMiddleware,
-  lessonsController.displayStudentLessons
-);
+router
+  .get(
+    '/myStudents/:studentId/lessons',
+    authenticationMiddleware,
+    lessonsController.displayStudentLessons
+  )
+  .get(
+    '/myStudents/:studentId/lessons/:lessonId',
+    authenticationMiddleware,
+    lessonsController.getLessonDetails
+  );
 
 module.exports = router;

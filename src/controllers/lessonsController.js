@@ -11,9 +11,9 @@ const {
 } = require('../errors');
 const ForbiddenError = require('../errors/forbidden');
 
+//Display all one of my student lessons
 const displayStudentLessons = async (req, res) => {
   const userId = req.user.userId;
-
   const { studentId } = req.params;
 
   try {
@@ -33,6 +33,27 @@ const displayStudentLessons = async (req, res) => {
   }
 };
 
+//Display lesson details
+const getLessonDetails = async (req, res) => {
+  const userId = req.user.userId;
+  const { studentId, lessonId } = req.params;
+  try {
+    const lessonDetails = await Lesson.findById(lessonId);
+
+    if (!lessonDetails) {
+      throw new NotFoundError('Lesson does not exist');
+    }
+
+    res.status(StatusCodes.OK).json({ lesson: lessonDetails });
+  } catch (error) {
+    console.error('Error retrieving lesson details:', error);
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: 'Internal server error' });
+  }
+};
+
 module.exports = {
   displayStudentLessons,
+  getLessonDetails,
 };
