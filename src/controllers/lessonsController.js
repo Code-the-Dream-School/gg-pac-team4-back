@@ -53,6 +53,7 @@ const getLessonDetails = async (req, res) => {
   }
 };
 
+//create a new lesson
 const createLesson = async (req, res) => {
   const createdBy = req.user.userId;
   const { studentId } = req.params;
@@ -94,7 +95,6 @@ const createLesson = async (req, res) => {
       classId: classInfo._id,
     });
 
-    // Сохранение нового урока
     const savedLesson = await newLesson.save();
 
     res
