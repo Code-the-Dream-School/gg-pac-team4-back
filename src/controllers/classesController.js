@@ -4,6 +4,7 @@ const Class = require('../models/Class');
 const User = require('../models/User');
 const Teacher = require('../models/Teacher');
 const Student = require('../models/Student');
+const Lesson = require('../models/Lesson');
 const { StatusCodes } = require('http-status-codes');
 const {
   BadRequestError,
@@ -225,7 +226,7 @@ const editClass = async (req, res) => {
       { new: true, runValidators: true }
     );
 
-    res.status(StatusCodes.OK).json({ project: updatedClass });
+    res.status(StatusCodes.OK).json({ class: updatedClass });
   } catch (error) {
     console.error('Error editing class:', error);
     const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
@@ -256,6 +257,13 @@ const deleteClass = async (req, res) => {
     if (classToDelete.classImagePublicId !== 'default_class_image') {
       await cloudinary.uploader.destroy(classToDelete.classImagePublicId);
     }
+
+    // Remove the class from the creator's myClasses array
+    await Teacher.findByIdAndUpdate(
+      userId,
+      { $pull: { myClasses: classId } },
+      { new: true }
+    );
 
     await Class.findByIdAndDelete(classId);
 
@@ -307,36 +315,33 @@ const applyForClass = async (req, res) => {
         .json({ message: 'Invalid time slot ID.' });
     }
 
-    // Check lesson type and handle applications accordingly
-    if (classToApply.lessonType === '1:1') {
-      // Check if there is already an application (if you are enforcing only one student per class)
-      if (classToApply.applications.length > 0) {
-        return res
-          .status(StatusCodes.BAD_REQUEST)
-          .json({ message: 'This class is already booked.' });
-      }
+    const date = availableTimeSlot.date;
+    const startTime = availableTimeSlot.startTime;
 
-      classToApply.applications.push({ userId });
-      // Remove the applied time slot from availableTime
+    // Store the entire availableTimeSlot object in the applications array
+    classToApply.applications.push({
+      userId,
+      date,
+      startTime,
+    });
+    if (classToApply.lessonType === '1:1') {
+      // Remove the time slot from availableTime after applying
       await Class.findByIdAndUpdate(
         classId,
         { $pull: { availableTime: { _id: availableTimeId } } },
         { new: true }
       );
-      await classToApply.save();
-      return res.status(StatusCodes.OK).json({
-        message: 'You have successfully applied for the one-on-one class.',
-      });
-    } else if (classToApply.lessonType === 'Group') {
-      // Add application for group lesson
-      classToApply.applications.push({ userId });
-      await classToApply.save();
-      return res.status(StatusCodes.OK).json({
-        message: 'You have successfully applied for the group class.',
-      });
-    } else {
-      throw new BadRequestError('Invalid class type');
     }
+
+    await classToApply.save();
+    const successMessage =
+      classToApply.lessonType === '1:1'
+        ? 'You have successfully applied for the one-on-one class.'
+        : 'You have successfully applied for the group class.';
+
+    return res.status(StatusCodes.OK).json({
+      message: successMessage,
+    });
   } catch (error) {
     console.error(error);
     return res
@@ -403,6 +408,26 @@ const approveApplication = async (req, res) => {
 
     await teacher.save();
 
+    const classInfo = await Class.findById(classId);
+    const lessonTitle = `Lesson 1: Welcome to ${classInfo.classTitle} class.`;
+    const lessonDescription = `${classInfo.description}`;
+
+    const lesson = new Lesson({
+      createdBy: userId,
+      studentId: application.userId,
+      classId: classId,
+      lessonTitle,
+      type: classInfo.type,
+      lessonDescription,
+      lessonSchedule: {
+        date: application.date,
+        startTime: application.startTime,
+      },
+    });
+
+    const savedLesson = await lesson.save();
+    const lessonId = savedLesson._id;
+
     // Update the student's myTeachers array
     const student = await Student.findById(application.userId);
     if (!student) {
@@ -412,6 +437,11 @@ const approveApplication = async (req, res) => {
     // Add teacher to student's myTeachers array
     if (!student.myTeachers.includes(userId)) {
       student.myTeachers.push(userId);
+    }
+
+    // Add lesson to student's myLessons array
+    if (!student.myLessons.includes(lessonId)) {
+      student.myLessons.push(lessonId);
     }
 
     await student.save();

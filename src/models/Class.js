@@ -113,6 +113,12 @@ const ClassSchema = new mongoose.Schema(
           type: Date,
           default: Date.now,
         },
+        date: {
+          type: Date,
+        },
+        startTime: {
+          type: String,
+        },
       },
     ],
     classStudents: [
