@@ -14,6 +14,7 @@ const {
 const ForbiddenError = require('../errors/forbidden');
 
 // Search for classes
+// Search for classes
 const displaySearchClasses = async (req, res) => {
   let { page, limit, search, sortBy, sortOrder } = req.query;
 
@@ -37,21 +38,30 @@ const displaySearchClasses = async (req, res) => {
           { description: searchRegex },
         ],
       };
+
+      const classes = await Class.find(query)
+        .skip(skip)
+        .limit(limit)
+        .sort({ [sortBy]: sortOrder });
+
+      const total = await Class.countDocuments(query);
+
+      res.status(StatusCodes.OK).json({
+        classes,
+        total,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page,
+      });
+    } else {
+      const classes = await Class.find().sort({ [sortBy]: sortOrder });
+
+      res.status(StatusCodes.OK).json({
+        classes,
+        total: classes.length,
+        totalPages: 1,
+        currentPage: 1,
+      });
     }
-
-    const classes = await Class.find(query)
-      .skip(skip)
-      .limit(limit)
-      .sort({ [sortBy]: sortOrder });
-
-    const total = await Class.countDocuments(query);
-
-    res.status(StatusCodes.OK).json({
-      classes,
-      total,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
-    });
   } catch (error) {
     console.error('Error retrieving classes:', error);
     res
