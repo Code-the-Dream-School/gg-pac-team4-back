@@ -14,7 +14,6 @@ const {
 const ForbiddenError = require('../errors/forbidden');
 
 // Search for classes
-// Search for classes
 const displaySearchClasses = async (req, res) => {
   let { page, limit, search, sortBy, sortOrder } = req.query;
 
