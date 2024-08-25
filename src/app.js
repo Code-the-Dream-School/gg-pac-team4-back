@@ -1,8 +1,9 @@
 require('dotenv').config({ path: __dirname + '/../.env' });
 
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
 const mongoose = require('mongoose');
-const app = express();
 const cors = require('cors');
 const favicon = require('express-favicon');
 const logger = require('morgan');
@@ -10,6 +11,8 @@ const cloudinary = require('cloudinary').v2;
 
 const errorHandlerMiddleware = require('./middleware/error-handler.js');
 const notFound = require('./middleware/notFound.js');
+
+const app = express();
 
 //import {v2 as cloudinary} from 'cloudinary';
 cloudinary.config({
@@ -46,4 +49,17 @@ app.use('/api/v1/classes', classesRouter);
 app.use(notFound);
 app.use(errorHandlerMiddleware);
 
-module.exports = app;
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: { origin: 'http://localhost:5173', method: ['GET', 'POST'] },
+});
+
+io.on('connection', (socket) => {
+  console.log(`A user connected`, socket.id);
+
+  socket.on('disconnect', () => {
+    console.log(`A user disconnected`);
+  });
+});
+
+module.exports = server;
