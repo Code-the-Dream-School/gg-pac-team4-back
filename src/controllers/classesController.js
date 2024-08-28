@@ -345,8 +345,7 @@ const applyForClass = async (req, res) => {
     await classToApply.save();
 
     global.io.emit(`applications-${classToApply.createdBy}`, {
-      content:
-        'You have a new application for class. Please check your notifications.',
+      content: `You have a new application for the class: ${classToApply.classTitle}. Please check your notifications for more information.`,
     });
 
     const successMessage =
