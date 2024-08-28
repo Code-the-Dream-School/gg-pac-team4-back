@@ -468,6 +468,11 @@ const approveApplication = async (req, res) => {
 
     await applicationToApprove.save();
 
+    // Emit a message to the specific applicant
+    global.io.emit(`approveMessage-${application.userId}`, {
+      content: `Your application for the ${applicationToApprove.classTitle} class has been approved. Find more information about your first lesson in My Lessons.`,
+    });
+
     res.status(StatusCodes.OK).json({ message: 'Applicant approved' });
   } catch (error) {
     console.error('Error approving application:', error);
@@ -512,6 +517,11 @@ const rejectApplication = async (req, res) => {
     );
 
     await applicationToReject.save();
+
+    // Emit a message to the specific applicant
+    global.io.emit(`rejectMessage-${application.userId}`, {
+      content: `Your application for the ${applicationToReject.classTitle} class has been declined.`,
+    });
 
     res.status(StatusCodes.OK).json({ message: 'Application rejected' });
   } catch (error) {
