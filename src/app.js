@@ -21,6 +21,8 @@ cloudinary.config({
   api_secret: process.env.CLOUD_API_SECRET,
 });
 
+const User = require('./models/User'); // Убедитесь, что путь правильный
+
 const userRouter = require('./routes/userRouter.js');
 const classesRouter = require('./routes/classesRouter.js');
 const lessonsRouter = require('./routes/lessonsRouter.js');
@@ -53,13 +55,6 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: 'http://localhost:5173', method: ['GET', 'POST'] },
 });
-
-io.on('connection', (socket) => {
-  console.log(`A user connected`, socket.id);
-
-  socket.on('disconnect', () => {
-    console.log(`A user disconnected`);
-  });
-});
+global.io = io;
 
 module.exports = server;

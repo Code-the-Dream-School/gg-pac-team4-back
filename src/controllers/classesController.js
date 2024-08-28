@@ -343,6 +343,12 @@ const applyForClass = async (req, res) => {
     }
 
     await classToApply.save();
+
+    global.io.emit(`applications-${classToApply.createdBy}`, {
+      content:
+        'You have a new application for class. Please check your notifications.',
+    });
+
     const successMessage =
       classToApply.lessonType === '1:1'
         ? 'You have successfully applied for the one-on-one class.'
