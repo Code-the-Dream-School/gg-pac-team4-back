@@ -21,7 +21,7 @@ cloudinary.config({
   api_secret: process.env.CLOUD_API_SECRET,
 });
 
-const User = require('./models/User'); // Убедитесь, что путь правильный
+const User = require('./models/User');
 
 const userRouter = require('./routes/userRouter.js');
 const classesRouter = require('./routes/classesRouter.js');
