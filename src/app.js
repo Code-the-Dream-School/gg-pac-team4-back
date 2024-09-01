@@ -53,7 +53,13 @@ app.use(errorHandlerMiddleware);
 
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: 'http://localhost:5173', method: ['GET', 'POST'] },
+  cors: {
+    origin: [
+      'http://localhost:5173',
+      'https://gg-pac-team4-front-2f5s.onrender.com/',
+    ],
+    method: ['GET', 'POST'],
+  },
 });
 global.io = io;
 
