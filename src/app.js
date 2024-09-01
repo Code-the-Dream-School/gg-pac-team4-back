@@ -1,8 +1,9 @@
 require('dotenv').config({ path: __dirname + '/../.env' });
 
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
 const mongoose = require('mongoose');
-const app = express();
 const cors = require('cors');
 const favicon = require('express-favicon');
 const logger = require('morgan');
@@ -11,12 +12,16 @@ const cloudinary = require('cloudinary').v2;
 const errorHandlerMiddleware = require('./middleware/error-handler.js');
 const notFound = require('./middleware/notFound.js');
 
+const app = express();
+
 //import {v2 as cloudinary} from 'cloudinary';
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.CLOUD_API_KEY,
   api_secret: process.env.CLOUD_API_SECRET,
 });
+
+const User = require('./models/User');
 
 const userRouter = require('./routes/userRouter.js');
 const classesRouter = require('./routes/classesRouter.js');
@@ -46,4 +51,16 @@ app.use('/api/v1/classes', classesRouter);
 app.use(notFound);
 app.use(errorHandlerMiddleware);
 
-module.exports = app;
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: [
+      'http://localhost:5173',
+      'https://gg-pac-team4-front-2f5s.onrender.com/',
+    ],
+    method: ['GET', 'POST'],
+  },
+});
+global.io = io;
+
+module.exports = server;

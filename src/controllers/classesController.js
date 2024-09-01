@@ -37,21 +37,30 @@ const displaySearchClasses = async (req, res) => {
           { description: searchRegex },
         ],
       };
+
+      const classes = await Class.find(query)
+        .skip(skip)
+        .limit(limit)
+        .sort({ [sortBy]: sortOrder });
+
+      const total = await Class.countDocuments(query);
+
+      res.status(StatusCodes.OK).json({
+        classes,
+        total,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page,
+      });
+    } else {
+      const classes = await Class.find().sort({ [sortBy]: sortOrder });
+
+      res.status(StatusCodes.OK).json({
+        classes,
+        total: classes.length,
+        totalPages: 1,
+        currentPage: 1,
+      });
     }
-
-    const classes = await Class.find(query)
-      .skip(skip)
-      .limit(limit)
-      .sort({ [sortBy]: sortOrder });
-
-    const total = await Class.countDocuments(query);
-
-    res.status(StatusCodes.OK).json({
-      classes,
-      total,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
-    });
   } catch (error) {
     console.error('Error retrieving classes:', error);
     res
@@ -80,11 +89,17 @@ const getClassDetails = async (req, res) => {
   }
 };
 
-//Create a class, only after login
 const createClass = async (req, res) => {
-  const createdBy = req.user.userId;
+  const { userId, role } = req.user;
 
   try {
+    // Check if the user has the role of a teacher
+    if (role !== 'teacher') {
+      return res
+        .status(403)
+        .json({ message: 'Only teachers can create classes.' });
+    }
+
     const {
       category,
       classTitle,
@@ -107,6 +122,7 @@ const createClass = async (req, res) => {
       price,
       duration,
     });
+
     if (existingClass) {
       throw new BadRequestError(
         'Class with this title and description already exists.'
@@ -142,7 +158,7 @@ const createClass = async (req, res) => {
       experience,
       other,
       availableTime,
-      createdBy,
+      createdBy: userId,
       classImageUrl,
       classImagePublicId,
       lessonType,
@@ -151,9 +167,9 @@ const createClass = async (req, res) => {
     // Save the new class and get the savedClass object
     const savedClass = await newClass.save();
 
-    // Update user's myClasses with the new class ID
+    // Update the teacher's myClasses with the new class ID
     await Teacher.findByIdAndUpdate(
-      createdBy,
+      userId,
       { $push: { myClasses: savedClass._id } },
       { new: true } // Return the updated document
     );
@@ -334,6 +350,11 @@ const applyForClass = async (req, res) => {
     }
 
     await classToApply.save();
+
+    global.io.emit(`applications-${classToApply.createdBy}`, {
+      content: `You have a new application for the class: ${classToApply.classTitle}. Please check your notifications for more information.`,
+    });
+
     const successMessage =
       classToApply.lessonType === '1:1'
         ? 'You have successfully applied for the one-on-one class.'
@@ -454,6 +475,11 @@ const approveApplication = async (req, res) => {
 
     await applicationToApprove.save();
 
+    // Emit a message to the specific applicant
+    global.io.emit(`approveMessage-${application.userId}`, {
+      content: `Your application for the ${applicationToApprove.classTitle} class has been approved. Find more information about your first lesson in My Lessons.`,
+    });
+
     res.status(StatusCodes.OK).json({ message: 'Applicant approved' });
   } catch (error) {
     console.error('Error approving application:', error);
@@ -474,10 +500,16 @@ const rejectApplication = async (req, res) => {
       throw new NotFoundError('Application does not exist');
     }
 
-    if (
-      !applicationToReject.createdBy ||
-      applicationToReject.createdBy.toString() !== userId
-    ) {
+    const isCreator =
+      applicationToReject.createdBy &&
+      applicationToReject.createdBy.toString() === userId;
+    const isApplicant =
+      applicationToReject.applications &&
+      applicationToReject.applications.some(
+        (app) => app.userId.toString() === userId
+      );
+
+    if (!isCreator && !isApplicant) {
       throw new ForbiddenError(
         'You do not have permission to reject this application.'
       );
@@ -498,6 +530,16 @@ const rejectApplication = async (req, res) => {
     );
 
     await applicationToReject.save();
+
+    // Emit a message to the specific applicant
+    global.io.emit(`rejectMessage-${application.userId}`, {
+      content: `Your application for the ${applicationToReject.classTitle} class has been declined.`,
+    });
+
+    // Emit a message to the specific class creator
+    global.io.emit(`rejectMessage-${applicationToReject.createdBy}`, {
+      content: `Application for your ${applicationToReject.classTitle} class has been declined.`,
+    });
 
     res.status(StatusCodes.OK).json({ message: 'Application rejected' });
   } catch (error) {
