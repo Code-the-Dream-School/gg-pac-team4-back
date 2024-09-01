@@ -536,6 +536,11 @@ const rejectApplication = async (req, res) => {
       content: `Your application for the ${applicationToReject.classTitle} class has been declined.`,
     });
 
+    // Emit a message to the specific class creator
+    global.io.emit(`rejectMessage-${applicationToReject.createdBy}`, {
+      content: `Application for your ${applicationToReject.classTitle} class has been declined.`,
+    });
+
     res.status(StatusCodes.OK).json({ message: 'Application rejected' });
   } catch (error) {
     console.error('Error rejecting application:', error);
