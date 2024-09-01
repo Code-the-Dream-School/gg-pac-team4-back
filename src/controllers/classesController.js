@@ -89,11 +89,17 @@ const getClassDetails = async (req, res) => {
   }
 };
 
-//Create a class, only after login
 const createClass = async (req, res) => {
-  const createdBy = req.user.userId;
+  const { userId, role } = req.user;
 
   try {
+    // Check if the user has the role of a teacher
+    if (role !== 'teacher') {
+      return res
+        .status(403)
+        .json({ message: 'Only teachers can create classes.' });
+    }
+
     const {
       category,
       classTitle,
@@ -116,6 +122,7 @@ const createClass = async (req, res) => {
       price,
       duration,
     });
+
     if (existingClass) {
       throw new BadRequestError(
         'Class with this title and description already exists.'
@@ -151,7 +158,7 @@ const createClass = async (req, res) => {
       experience,
       other,
       availableTime,
-      createdBy,
+      createdBy: userId,
       classImageUrl,
       classImagePublicId,
       lessonType,
@@ -160,9 +167,9 @@ const createClass = async (req, res) => {
     // Save the new class and get the savedClass object
     const savedClass = await newClass.save();
 
-    // Update user's myClasses with the new class ID
+    // Update the teacher's myClasses with the new class ID
     await Teacher.findByIdAndUpdate(
-      createdBy,
+      userId,
       { $push: { myClasses: savedClass._id } },
       { new: true } // Return the updated document
     );
