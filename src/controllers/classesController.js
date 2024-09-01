@@ -493,10 +493,16 @@ const rejectApplication = async (req, res) => {
       throw new NotFoundError('Application does not exist');
     }
 
-    if (
-      !applicationToReject.createdBy ||
-      applicationToReject.createdBy.toString() !== userId
-    ) {
+    const isCreator =
+      applicationToReject.createdBy &&
+      applicationToReject.createdBy.toString() === userId;
+    const isApplicant =
+      applicationToReject.applications &&
+      applicationToReject.applications.some(
+        (app) => app.userId.toString() === userId
+      );
+
+    if (!isCreator && !isApplicant) {
       throw new ForbiddenError(
         'You do not have permission to reject this application.'
       );
