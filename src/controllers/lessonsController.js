@@ -133,8 +133,14 @@ const createLesson = async (req, res) => {
   const createdBy = req.user.userId;
   const userRole = req.user.role;
   const { studentId } = req.params;
-  const { lessonTitle, lessonDescription, lessonSchedule, type, classId } =
-    req.body;
+  const {
+    lessonTitle,
+    lessonDescription,
+    lessonSchedule,
+    type,
+    classId,
+    hometask,
+  } = req.body;
 
   if (userRole !== 'teacher') {
     return res.status(StatusCodes.FORBIDDEN).json({
@@ -181,6 +187,7 @@ const createLesson = async (req, res) => {
       createdBy,
       studentId,
       classId,
+      hometask,
     });
 
     const savedLesson = await newLesson.save();
