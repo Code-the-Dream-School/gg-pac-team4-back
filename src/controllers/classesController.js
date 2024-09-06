@@ -12,6 +12,7 @@ const {
   UnauthenticatedError,
 } = require('../errors');
 const ForbiddenError = require('../errors/forbidden');
+const sendEmailNotification = require('../utils/sendEmailNotification');
 
 // Search for classes
 const displaySearchClasses = async (req, res) => {
@@ -349,11 +350,26 @@ const applyForClass = async (req, res) => {
       );
     }
 
-    await classToApply.save();
+    // Find teacher
+    const teacher = await Teacher.findById(classToApply.createdBy);
+    if (!teacher) {
+      throw new NotFoundError('Teacher not found');
+    }
 
     global.io.emit(`applications-${classToApply.createdBy}`, {
       content: `You have a new application for the class: ${classToApply.classTitle}. Please check your notifications for more information.`,
     });
+
+    // Send email
+    const emailMessage = `You have a new application for the class: ${classToApply.classTitle}. Please check your notifications for more information.`;
+
+    await sendEmailNotification({
+      to: teacher.email,
+      subject: 'New application',
+      text: emailMessage,
+    });
+
+    await classToApply.save();
 
     const successMessage =
       classToApply.lessonType === '1:1'
@@ -455,6 +471,20 @@ const approveApplication = async (req, res) => {
       throw new NotFoundError('Student not found');
     }
 
+    // Send the notification using WebSocket
+    global.io.emit(`approveMessage-${application.userId}`, {
+      content: `Your application for the ${applicationToApprove.classTitle} class has been approved. Find more information about your first lesson in My Lessons.`,
+    });
+
+    // Send email
+    const emailMessage = `Your application for the ${applicationToApprove.classTitle} class has been approved. Find more information about your first lesson in My Lessons.`;
+
+    await sendEmailNotification({
+      to: student.email,
+      subject: 'Application Approved',
+      text: emailMessage,
+    });
+
     // Add teacher to student's myTeachers array
     if (!student.myTeachers.includes(userId)) {
       student.myTeachers.push(userId);
@@ -474,11 +504,6 @@ const approveApplication = async (req, res) => {
       );
 
     await applicationToApprove.save();
-
-    // Emit a message to the specific applicant
-    global.io.emit(`approveMessage-${application.userId}`, {
-      content: `Your application for the ${applicationToApprove.classTitle} class has been approved. Find more information about your first lesson in My Lessons.`,
-    });
 
     res.status(StatusCodes.OK).json({ message: 'Applicant approved' });
   } catch (error) {
@@ -518,6 +543,12 @@ const rejectApplication = async (req, res) => {
     // Find the application to reject by ID
     const application = applicationToReject.applications.id(applicationId);
 
+    // Find student
+    const student = await Student.findById(application.userId);
+    if (!student) {
+      throw new NotFoundError('Student not found');
+    }
+
     if (!application) {
       return res
         .status(StatusCodes.NOT_FOUND)
@@ -529,17 +560,20 @@ const rejectApplication = async (req, res) => {
       (application) => application._id.toString() !== applicationId
     );
 
-    await applicationToReject.save();
-
     // Emit a message to the specific applicant
     global.io.emit(`rejectMessage-${application.userId}`, {
       content: `Your application for the ${applicationToReject.classTitle} class has been declined.`,
     });
 
-    // Emit a message to the specific class creator
-    global.io.emit(`rejectMessage-${applicationToReject.createdBy}`, {
-      content: `Application for your ${applicationToReject.classTitle} class has been declined.`,
+    const emailMessage = `Your application for the ${applicationToReject.classTitle} class has been declined.`;
+
+    await sendEmailNotification({
+      to: student.email,
+      subject: 'Application declined',
+      text: emailMessage,
     });
+
+    await applicationToReject.save();
 
     res.status(StatusCodes.OK).json({ message: 'Application rejected' });
   } catch (error) {
