@@ -280,6 +280,7 @@ const deleteClass = async (req, res) => {
       { $pull: { myClasses: classId } },
       { new: true }
     );
+    await Lesson.deleteMany({ classId });
 
     await Class.findByIdAndDelete(classId);
 
