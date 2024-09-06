@@ -295,6 +295,23 @@ const deleteClass = async (req, res) => {
 
 //apply for class
 
+// Function to calculate age from date of birth
+const calculateAge = (dateOfBirth) => {
+  const today = new Date();
+  const birthDate = new Date(dateOfBirth);
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDifference = today.getMonth() - birthDate.getMonth();
+
+  if (
+    monthDifference < 0 ||
+    (monthDifference === 0 && today.getDate() < birthDate.getDate())
+  ) {
+    age--;
+  }
+  return age;
+};
+
+// Controller function to apply for a class
 const applyForClass = async (req, res) => {
   const { classId } = req.params;
   const userId = req.user.userId;
@@ -314,8 +331,30 @@ const applyForClass = async (req, res) => {
       throw new NotFoundError('Class does not exist');
     }
 
+    // Retrieve the student’s date of birth from the User model
+    const student = await User.findById(userId); // Assuming you have a User model
+    const studentDateOfBirth = student.dateOfBirth;
+
+    if (!studentDateOfBirth) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: 'Date of Birth is missing in user information.',
+      });
+    }
+
+    const studentAge = calculateAge(studentDateOfBirth);
+
+    // Check if student’s age fits within the class’s age range
+    if (
+      studentAge < classToApply.ages.minAge ||
+      studentAge > classToApply.ages.maxAge
+    ) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: `Your age (${studentAge}) does not fit within the class’s age range (${classToApply.ages.minAge}-${classToApply.ages.maxAge}).`,
+      });
+    }
+
     const hasApplied = classToApply.applications.some(
-      (applications) => applications.userId.toString() === userId.toString()
+      (application) => application.userId.toString() === userId.toString()
     );
 
     if (hasApplied) {
@@ -341,6 +380,7 @@ const applyForClass = async (req, res) => {
       date,
       startTime,
     });
+
     if (classToApply.lessonType === '1:1') {
       // Remove the time slot from availableTime after applying
       await Class.findByIdAndUpdate(
