@@ -149,8 +149,6 @@ const createLesson = async (req, res) => {
   }
 
   try {
-    const { lessonTitle, lessonDescription, lessonSchedule, type } = req.body;
-
     const classInfo = await Class.findOne({
       createdBy,
       'classStudents.userId': studentId,
@@ -182,7 +180,7 @@ const createLesson = async (req, res) => {
     const newLesson = new Lesson({
       lessonTitle,
       lessonDescription,
-      type: classInfo.type,
+      type,
       lessonSchedule,
       createdBy,
       studentId,

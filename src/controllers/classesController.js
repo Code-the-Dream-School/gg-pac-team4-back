@@ -12,6 +12,7 @@ const {
   UnauthenticatedError,
 } = require('../errors');
 const ForbiddenError = require('../errors/forbidden');
+const { calculateAge } = require('../utils/adultValidation');
 
 // Search for classes
 const displaySearchClasses = async (req, res) => {
@@ -302,22 +303,6 @@ const deleteClass = async (req, res) => {
 };
 
 //apply for class
-
-// Function to calculate age from date of birth
-const calculateAge = (dateOfBirth) => {
-  const today = new Date();
-  const birthDate = new Date(dateOfBirth);
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDifference = today.getMonth() - birthDate.getMonth();
-
-  if (
-    monthDifference < 0 ||
-    (monthDifference === 0 && today.getDate() < birthDate.getDate())
-  ) {
-    age--;
-  }
-  return age;
-};
 
 // Controller function to apply for a class
 const applyForClass = async (req, res) => {
