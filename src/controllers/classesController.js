@@ -270,6 +270,19 @@ const deleteClass = async (req, res) => {
         'You do not have permission to delete this class'
       );
     }
+
+    // Check if there are any lessons associated with the class
+    const lessonsCount = await Lesson.countDocuments({ classId });
+    if (lessonsCount > 0) {
+      return res
+        .status(StatusCodes.FORBIDDEN)
+        .json({ message: 'Cannot delete class with existing lessons' });
+    }
+
+    if (classToDelete.classImagePublicId !== 'default_class_image') {
+      await cloudinary.uploader.destroy(classToDelete.classImagePublicId);
+    }
+
     if (classToDelete.classImagePublicId !== 'default_class_image') {
       await cloudinary.uploader.destroy(classToDelete.classImagePublicId);
     }
@@ -280,7 +293,6 @@ const deleteClass = async (req, res) => {
       { $pull: { myClasses: classId } },
       { new: true }
     );
-    await Lesson.deleteMany({ classId });
 
     await Class.findByIdAndDelete(classId);
 
