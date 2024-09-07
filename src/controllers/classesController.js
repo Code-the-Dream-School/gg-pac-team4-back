@@ -283,10 +283,6 @@ const deleteClass = async (req, res) => {
       await cloudinary.uploader.destroy(classToDelete.classImagePublicId);
     }
 
-    if (classToDelete.classImagePublicId !== 'default_class_image') {
-      await cloudinary.uploader.destroy(classToDelete.classImagePublicId);
-    }
-
     // Remove the class from the creator's myClasses array
     await Teacher.findByIdAndUpdate(
       userId,
