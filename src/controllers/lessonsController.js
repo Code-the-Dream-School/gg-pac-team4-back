@@ -133,6 +133,14 @@ const createLesson = async (req, res) => {
   const createdBy = req.user.userId;
   const userRole = req.user.role;
   const { studentId } = req.params;
+  const {
+    lessonTitle,
+    lessonDescription,
+    lessonSchedule,
+    type,
+    classId,
+    hometask,
+  } = req.body;
 
   if (userRole !== 'teacher') {
     return res.status(StatusCodes.FORBIDDEN).json({
@@ -141,11 +149,10 @@ const createLesson = async (req, res) => {
   }
 
   try {
-    const { lessonTitle, lessonDescription, lessonSchedule, type } = req.body;
-
     const classInfo = await Class.findOne({
       createdBy,
       'classStudents.userId': studentId,
+      _id: classId,
     });
 
     if (!classInfo) {
@@ -154,27 +161,31 @@ const createLesson = async (req, res) => {
       });
     }
 
+    // Check if a lesson with the same classId, studentId, lessonTitle, and lessonSchedule already exists
     const existingLesson = await Lesson.findOne({
       studentId,
       lessonTitle,
       lessonSchedule,
+      classId,
       type,
     });
 
     if (existingLesson) {
-      throw new BadRequestError(
-        'Lesson with this student, title, and schedule already exists.'
-      );
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message:
+          'Lesson with this student, title, schedule, and class already exists.',
+      });
     }
 
     const newLesson = new Lesson({
       lessonTitle,
       lessonDescription,
-      type: classInfo.type,
+      type,
       lessonSchedule,
       createdBy,
       studentId,
-      classId: classInfo._id,
+      classId,
+      hometask,
     });
 
     const savedLesson = await newLesson.save();
