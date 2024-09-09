@@ -10,6 +10,7 @@ const {
   UnauthenticatedError,
 } = require('../errors');
 const ForbiddenError = require('../errors/forbidden');
+const sendEmailNotification = require('../utils/sendEmailNotification');
 
 //Display all one of my student lessons
 const displayStudentLessons = async (req, res) => {
@@ -186,6 +187,25 @@ const createLesson = async (req, res) => {
       studentId,
       classId,
       hometask,
+    });
+
+    // Find student
+    const student = await Student.findById(newLesson.studentId);
+    if (!student) {
+      throw new NotFoundError('Student not found');
+    }
+
+    global.io.emit(`newLesson-${newLesson.studentId}`, {
+      content: `You have a new lesson for the class: ${classInfo.classTitle}. Please check your Lessons for more information.`,
+    });
+
+    // Send email
+    const emailMessage = `You have a new lesson for the class: ${classInfo.classTitle}. Please check your Lessons for more information.`;
+
+    await sendEmailNotification({
+      to: student.email,
+      subject: 'New lesson',
+      text: emailMessage,
     });
 
     const savedLesson = await newLesson.save();
