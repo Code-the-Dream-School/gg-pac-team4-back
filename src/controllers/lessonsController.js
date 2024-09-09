@@ -324,6 +324,25 @@ const deleteLesson = async (req, res) => {
       );
     }
 
+    // Find student
+    const student = await Student.findById(lessonToDelete.studentId);
+    if (!student) {
+      throw new NotFoundError('Student not found');
+    }
+
+    global.io.emit(`deleteLesson-${lessonToDelete.studentId}`, {
+      content: `The teacher canceled your lesson: ${lessonToDelete.lessonTitle}.`,
+    });
+
+    // Send email
+    const emailMessage = `The teacher canceled your lesson: ${lessonToDelete.lessonTitle}.`;
+
+    await sendEmailNotification({
+      to: student.email,
+      subject: 'Lesson canceled',
+      text: emailMessage,
+    });
+
     // Remove the lesson from the student's myLessons array
     await Student.findByIdAndUpdate(
       studentId,
