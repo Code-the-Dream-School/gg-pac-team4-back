@@ -10,6 +10,7 @@ const {
   UnauthenticatedError,
 } = require('../errors');
 const ForbiddenError = require('../errors/forbidden');
+const sendEmailNotification = require('../utils/sendEmailNotification');
 
 //Display all one of my student lessons
 const displayStudentLessons = async (req, res) => {
@@ -188,6 +189,25 @@ const createLesson = async (req, res) => {
       hometask,
     });
 
+    // Find student
+    const student = await Student.findById(newLesson.studentId);
+    if (!student) {
+      throw new NotFoundError('Student not found');
+    }
+
+    global.io.emit(`newLesson-${newLesson.studentId}`, {
+      content: `You have a new lesson for the class: ${classInfo.classTitle}. Please check your Lessons for more information.`,
+    });
+
+    // Send email
+    const emailMessage = `You have a new lesson for the class: ${classInfo.classTitle}. Please check your Lessons for more information.`;
+
+    await sendEmailNotification({
+      to: student.email,
+      subject: 'New lesson',
+      text: emailMessage,
+    });
+
     const savedLesson = await newLesson.save();
 
     // Update student's myLessons with the new class ID
@@ -249,6 +269,25 @@ const editLesson = async (req, res) => {
       { new: true, runValidators: true }
     );
 
+    // Find student
+    const student = await Student.findById(updatedLesson.studentId);
+    if (!student) {
+      throw new NotFoundError('Student not found');
+    }
+
+    global.io.emit(`editLesson-${updatedLesson.studentId}`, {
+      content: `The teacher made changes to your lesson: ${updatedLesson.lessonTitle}. Please check your Lessons for more information.`,
+    });
+
+    // Send email
+    const emailMessage = `The teacher made changes to your lesson: ${updatedLesson.lessonTitle}. Please check your Lessons for more information.`;
+
+    await sendEmailNotification({
+      to: student.email,
+      subject: 'Lesson changes',
+      text: emailMessage,
+    });
+
     res.status(StatusCodes.OK).json({ lesson: updatedLesson });
   } catch (error) {
     console.error('Error editing lesson:', error);
@@ -284,6 +323,25 @@ const deleteLesson = async (req, res) => {
         'You do not have permission to delete this lesson'
       );
     }
+
+    // Find student
+    const student = await Student.findById(lessonToDelete.studentId);
+    if (!student) {
+      throw new NotFoundError('Student not found');
+    }
+
+    global.io.emit(`deleteLesson-${lessonToDelete.studentId}`, {
+      content: `The teacher canceled your lesson: ${lessonToDelete.lessonTitle}.`,
+    });
+
+    // Send email
+    const emailMessage = `The teacher canceled your lesson: ${lessonToDelete.lessonTitle}.`;
+
+    await sendEmailNotification({
+      to: student.email,
+      subject: 'Lesson canceled',
+      text: emailMessage,
+    });
 
     // Remove the lesson from the student's myLessons array
     await Student.findByIdAndUpdate(
