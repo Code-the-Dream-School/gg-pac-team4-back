@@ -480,7 +480,7 @@ const approveApplication = async (req, res) => {
     await teacher.save();
 
     const classInfo = await Class.findById(classId);
-    const lessonTitle = `Lesson 1: Welcome to ${classInfo.classTitle} class.`;
+    const lessonTitle = `Lesson 1: Welcome to ${classInfo.classTitle} class`;
     const lessonDescription = `${classInfo.description}`;
 
     const lesson = new Lesson({

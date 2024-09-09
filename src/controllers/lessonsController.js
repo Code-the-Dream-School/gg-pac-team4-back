@@ -269,6 +269,25 @@ const editLesson = async (req, res) => {
       { new: true, runValidators: true }
     );
 
+    // Find student
+    const student = await Student.findById(updatedLesson.studentId);
+    if (!student) {
+      throw new NotFoundError('Student not found');
+    }
+
+    global.io.emit(`editLesson-${updatedLesson.studentId}`, {
+      content: `The teacher made changes to your lesson: ${updatedLesson.lessonTitle}. Please check your Lessons for more information.`,
+    });
+
+    // Send email
+    const emailMessage = `The teacher made changes to your lesson: ${updatedLesson.lessonTitle}. Please check your Lessons for more information.`;
+
+    await sendEmailNotification({
+      to: student.email,
+      subject: 'Lesson changes',
+      text: emailMessage,
+    });
+
     res.status(StatusCodes.OK).json({ lesson: updatedLesson });
   } catch (error) {
     console.error('Error editing lesson:', error);
