@@ -56,7 +56,7 @@ const io = new Server(server, {
   cors: {
     origin: [
       'http://localhost:5173',
-      'https://gg-pac-team4-front-2f5s.onrender.com/',
+      'https://gg-pac-team4-front-1.onrender.com/',
     ],
     method: ['GET', 'POST'],
   },
