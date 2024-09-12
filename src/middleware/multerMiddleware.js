@@ -1,7 +1,15 @@
 const multer = require('multer');
+const fs = require('fs');
 const path = require('path');
 const MAX_IMAGE_SIZE = 1024 * 1024 * 8; // 8MB size of image
 const MAX_VIDEO_SIZE = 1024 * 1024 * 10; // 10MB for videos
+
+const dirPath = path.join(__dirname, '../../public/uploads');
+
+if (!fs.existsSync(dirPath)) {
+  fs.mkdirSync(dirPath, { recursive: true });
+  console.log('Upload folder created');
+}
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
