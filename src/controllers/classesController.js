@@ -12,6 +12,8 @@ const {
   UnauthenticatedError,
 } = require('../errors');
 const ForbiddenError = require('../errors/forbidden');
+const { calculateAge } = require('../utils/adultValidation');
+const sendEmailNotification = require('../utils/sendEmailNotification');
 
 // Search for classes
 const displaySearchClasses = async (req, res) => {
@@ -37,21 +39,30 @@ const displaySearchClasses = async (req, res) => {
           { description: searchRegex },
         ],
       };
+
+      const classes = await Class.find(query)
+        .skip(skip)
+        .limit(limit)
+        .sort({ [sortBy]: sortOrder });
+
+      const total = await Class.countDocuments(query);
+
+      res.status(StatusCodes.OK).json({
+        classes,
+        total,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page,
+      });
+    } else {
+      const classes = await Class.find().sort({ [sortBy]: sortOrder });
+
+      res.status(StatusCodes.OK).json({
+        classes,
+        total: classes.length,
+        totalPages: 1,
+        currentPage: 1,
+      });
     }
-
-    const classes = await Class.find(query)
-      .skip(skip)
-      .limit(limit)
-      .sort({ [sortBy]: sortOrder });
-
-    const total = await Class.countDocuments(query);
-
-    res.status(StatusCodes.OK).json({
-      classes,
-      total,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
-    });
   } catch (error) {
     console.error('Error retrieving classes:', error);
     res
@@ -80,11 +91,17 @@ const getClassDetails = async (req, res) => {
   }
 };
 
-//Create a class, only after login
 const createClass = async (req, res) => {
-  const createdBy = req.user.userId;
+  const { userId, role } = req.user;
 
   try {
+    // Check if the user has the role of a teacher
+    if (role !== 'teacher') {
+      return res
+        .status(403)
+        .json({ message: 'Only teachers can create classes.' });
+    }
+
     const {
       category,
       classTitle,
@@ -107,6 +124,7 @@ const createClass = async (req, res) => {
       price,
       duration,
     });
+
     if (existingClass) {
       throw new BadRequestError(
         'Class with this title and description already exists.'
@@ -142,7 +160,7 @@ const createClass = async (req, res) => {
       experience,
       other,
       availableTime,
-      createdBy,
+      createdBy: userId,
       classImageUrl,
       classImagePublicId,
       lessonType,
@@ -151,9 +169,9 @@ const createClass = async (req, res) => {
     // Save the new class and get the savedClass object
     const savedClass = await newClass.save();
 
-    // Update user's myClasses with the new class ID
+    // Update the teacher's myClasses with the new class ID
     await Teacher.findByIdAndUpdate(
-      createdBy,
+      userId,
       { $push: { myClasses: savedClass._id } },
       { new: true } // Return the updated document
     );
@@ -254,6 +272,15 @@ const deleteClass = async (req, res) => {
         'You do not have permission to delete this class'
       );
     }
+
+    // Check if there are any lessons associated with the class
+    const lessonsCount = await Lesson.countDocuments({ classId });
+    if (lessonsCount > 0) {
+      return res
+        .status(StatusCodes.FORBIDDEN)
+        .json({ message: 'Cannot delete class with existing lessons' });
+    }
+
     if (classToDelete.classImagePublicId !== 'default_class_image') {
       await cloudinary.uploader.destroy(classToDelete.classImagePublicId);
     }
@@ -278,6 +305,7 @@ const deleteClass = async (req, res) => {
 
 //apply for class
 
+// Controller function to apply for a class
 const applyForClass = async (req, res) => {
   const { classId } = req.params;
   const userId = req.user.userId;
@@ -297,8 +325,30 @@ const applyForClass = async (req, res) => {
       throw new NotFoundError('Class does not exist');
     }
 
+    // Retrieve the student’s date of birth from the User model
+    const student = await User.findById(userId); // Assuming you have a User model
+    const studentDateOfBirth = student.dateOfBirth;
+
+    if (!studentDateOfBirth) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: 'Date of Birth is missing in user information.',
+      });
+    }
+
+    const studentAge = calculateAge(studentDateOfBirth);
+
+    // Check if student’s age fits within the class’s age range
+    if (
+      studentAge < classToApply.ages.minAge ||
+      studentAge > classToApply.ages.maxAge
+    ) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: `Your age (${studentAge}) does not fit within the class’s age range (${classToApply.ages.minAge}-${classToApply.ages.maxAge}).`,
+      });
+    }
+
     const hasApplied = classToApply.applications.some(
-      (applications) => applications.userId.toString() === userId.toString()
+      (application) => application.userId.toString() === userId.toString()
     );
 
     if (hasApplied) {
@@ -324,6 +374,7 @@ const applyForClass = async (req, res) => {
       date,
       startTime,
     });
+
     if (classToApply.lessonType === '1:1') {
       // Remove the time slot from availableTime after applying
       await Class.findByIdAndUpdate(
@@ -333,7 +384,27 @@ const applyForClass = async (req, res) => {
       );
     }
 
+    // Find teacher
+    const teacher = await Teacher.findById(classToApply.createdBy);
+    if (!teacher) {
+      throw new NotFoundError('Teacher not found');
+    }
+
+    global.io.emit(`applications-${classToApply.createdBy}`, {
+      content: `You have a new application for the class: ${classToApply.classTitle}. Please check your notifications for more information.`,
+    });
+
+    // Send email
+    const emailMessage = `You have a new application for the class: ${classToApply.classTitle}. Please check your notifications for more information.`;
+
+    await sendEmailNotification({
+      to: teacher.email,
+      subject: 'New application',
+      text: emailMessage,
+    });
+
     await classToApply.save();
+
     const successMessage =
       classToApply.lessonType === '1:1'
         ? 'You have successfully applied for the one-on-one class.'
@@ -409,7 +480,7 @@ const approveApplication = async (req, res) => {
     await teacher.save();
 
     const classInfo = await Class.findById(classId);
-    const lessonTitle = `Lesson 1: Welcome to ${classInfo.classTitle} class.`;
+    const lessonTitle = `Lesson 1: Welcome to ${classInfo.classTitle} class`;
     const lessonDescription = `${classInfo.description}`;
 
     const lesson = new Lesson({
@@ -433,6 +504,20 @@ const approveApplication = async (req, res) => {
     if (!student) {
       throw new NotFoundError('Student not found');
     }
+
+    // Send the notification using WebSocket
+    global.io.emit(`approveMessage-${application.userId}`, {
+      content: `Your application for the ${applicationToApprove.classTitle} class has been approved. Find more information about your first lesson in My Lessons.`,
+    });
+
+    // Send email
+    const emailMessage = `Your application for the ${applicationToApprove.classTitle} class has been approved. Find more information about your first lesson in My Lessons.`;
+
+    await sendEmailNotification({
+      to: student.email,
+      subject: 'Application Approved',
+      text: emailMessage,
+    });
 
     // Add teacher to student's myTeachers array
     if (!student.myTeachers.includes(userId)) {
@@ -474,10 +559,16 @@ const rejectApplication = async (req, res) => {
       throw new NotFoundError('Application does not exist');
     }
 
-    if (
-      !applicationToReject.createdBy ||
-      applicationToReject.createdBy.toString() !== userId
-    ) {
+    const isCreator =
+      applicationToReject.createdBy &&
+      applicationToReject.createdBy.toString() === userId;
+    const isApplicant =
+      applicationToReject.applications &&
+      applicationToReject.applications.some(
+        (app) => app.userId.toString() === userId
+      );
+
+    if (!isCreator && !isApplicant) {
       throw new ForbiddenError(
         'You do not have permission to reject this application.'
       );
@@ -485,6 +576,12 @@ const rejectApplication = async (req, res) => {
 
     // Find the application to reject by ID
     const application = applicationToReject.applications.id(applicationId);
+
+    // Find student
+    const student = await Student.findById(application.userId);
+    if (!student) {
+      throw new NotFoundError('Student not found');
+    }
 
     if (!application) {
       return res
@@ -496,6 +593,19 @@ const rejectApplication = async (req, res) => {
     applicationToReject.applications = applicationToReject.applications.filter(
       (application) => application._id.toString() !== applicationId
     );
+
+    // Emit a message to the specific applicant
+    global.io.emit(`rejectMessage-${application.userId}`, {
+      content: `Your application for the ${applicationToReject.classTitle} class has been declined.`,
+    });
+
+    const emailMessage = `Your application for the ${applicationToReject.classTitle} class has been declined.`;
+
+    await sendEmailNotification({
+      to: student.email,
+      subject: 'Application declined',
+      text: emailMessage,
+    });
 
     await applicationToReject.save();
 

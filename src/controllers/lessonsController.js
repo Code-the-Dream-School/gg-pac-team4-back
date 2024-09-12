@@ -10,6 +10,7 @@ const {
   UnauthenticatedError,
 } = require('../errors');
 const ForbiddenError = require('../errors/forbidden');
+const sendEmailNotification = require('../utils/sendEmailNotification');
 
 //Display all one of my student lessons
 const displayStudentLessons = async (req, res) => {
@@ -133,6 +134,14 @@ const createLesson = async (req, res) => {
   const createdBy = req.user.userId;
   const userRole = req.user.role;
   const { studentId } = req.params;
+  const {
+    lessonTitle,
+    lessonDescription,
+    lessonSchedule,
+    type,
+    classId,
+    hometask,
+  } = req.body;
 
   if (userRole !== 'teacher') {
     return res.status(StatusCodes.FORBIDDEN).json({
@@ -141,11 +150,10 @@ const createLesson = async (req, res) => {
   }
 
   try {
-    const { lessonTitle, lessonDescription, lessonSchedule, type } = req.body;
-
     const classInfo = await Class.findOne({
       createdBy,
       'classStudents.userId': studentId,
+      _id: classId,
     });
 
     if (!classInfo) {
@@ -154,27 +162,50 @@ const createLesson = async (req, res) => {
       });
     }
 
+    // Check if a lesson with the same classId, studentId, lessonTitle, and lessonSchedule already exists
     const existingLesson = await Lesson.findOne({
       studentId,
       lessonTitle,
       lessonSchedule,
+      classId,
       type,
     });
 
     if (existingLesson) {
-      throw new BadRequestError(
-        'Lesson with this student, title, and schedule already exists.'
-      );
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message:
+          'Lesson with this student, title, schedule, and class already exists.',
+      });
     }
 
     const newLesson = new Lesson({
       lessonTitle,
       lessonDescription,
-      type: classInfo.type,
+      type,
       lessonSchedule,
       createdBy,
       studentId,
-      classId: classInfo._id,
+      classId,
+      hometask,
+    });
+
+    // Find student
+    const student = await Student.findById(newLesson.studentId);
+    if (!student) {
+      throw new NotFoundError('Student not found');
+    }
+
+    global.io.emit(`newLesson-${newLesson.studentId}`, {
+      content: `You have a new lesson for the class: ${classInfo.classTitle}. Please check your Lessons for more information.`,
+    });
+
+    // Send email
+    const emailMessage = `You have a new lesson for the class: ${classInfo.classTitle}. Please check your Lessons for more information.`;
+
+    await sendEmailNotification({
+      to: student.email,
+      subject: 'New lesson',
+      text: emailMessage,
     });
 
     const savedLesson = await newLesson.save();
@@ -238,6 +269,25 @@ const editLesson = async (req, res) => {
       { new: true, runValidators: true }
     );
 
+    // Find student
+    const student = await Student.findById(updatedLesson.studentId);
+    if (!student) {
+      throw new NotFoundError('Student not found');
+    }
+
+    global.io.emit(`editLesson-${updatedLesson.studentId}`, {
+      content: `The teacher made changes to your lesson: ${updatedLesson.lessonTitle}. Please check your Lessons for more information.`,
+    });
+
+    // Send email
+    const emailMessage = `The teacher made changes to your lesson: ${updatedLesson.lessonTitle}. Please check your Lessons for more information.`;
+
+    await sendEmailNotification({
+      to: student.email,
+      subject: 'Lesson changes',
+      text: emailMessage,
+    });
+
     res.status(StatusCodes.OK).json({ lesson: updatedLesson });
   } catch (error) {
     console.error('Error editing lesson:', error);
@@ -273,6 +323,25 @@ const deleteLesson = async (req, res) => {
         'You do not have permission to delete this lesson'
       );
     }
+
+    // Find student
+    const student = await Student.findById(lessonToDelete.studentId);
+    if (!student) {
+      throw new NotFoundError('Student not found');
+    }
+
+    global.io.emit(`deleteLesson-${lessonToDelete.studentId}`, {
+      content: `The teacher canceled your lesson: ${lessonToDelete.lessonTitle}.`,
+    });
+
+    // Send email
+    const emailMessage = `The teacher canceled your lesson: ${lessonToDelete.lessonTitle}.`;
+
+    await sendEmailNotification({
+      to: student.email,
+      subject: 'Lesson canceled',
+      text: emailMessage,
+    });
 
     // Remove the lesson from the student's myLessons array
     await Student.findByIdAndUpdate(
